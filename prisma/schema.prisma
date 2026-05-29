@@ -1,0 +1,73 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+}
+
+model Journal {
+  id             String          @id @default(cuid())
+  title          String          @unique
+  issnPrint      String?
+  issnElectronic String?
+  publisher      String?
+  homepageUrl    String?
+  sourceType     String
+  sourceUrl      String?
+  sourceConfig   String?
+  active         Boolean         @default(true)
+  createdAt      DateTime        @default(now())
+  updatedAt      DateTime        @updatedAt
+  articles       Article[]
+  follow         FollowedJournal?
+}
+
+model Article {
+  id                  String          @id @default(cuid())
+  journalId           String
+  sourceId            String          @unique
+  doi                 String?         @unique
+  title               String
+  abstract            String?
+  publicationDate     DateTime?
+  authorsJson         String?
+  publisherLandingUrl String?
+  openAccessUrl       String?
+  directPdfUrl        String?
+  sourcePayload       String?
+  createdAt           DateTime        @default(now())
+  updatedAt           DateTime        @updatedAt
+  journal             Journal         @relation(fields: [journalId], references: [id], onDelete: Cascade)
+  savedArticle        SavedArticle?
+  accessAttempts      AccessAttempt[]
+
+  @@index([journalId, publicationDate])
+}
+
+model FollowedJournal {
+  id        String   @id @default(cuid())
+  journalId String   @unique
+  addedAt   DateTime @default(now())
+  journal   Journal  @relation(fields: [journalId], references: [id], onDelete: Cascade)
+}
+
+model SavedArticle {
+  id        String   @id @default(cuid())
+  articleId String   @unique
+  savedAt   DateTime @default(now())
+  openedAt  DateTime?
+  article   Article  @relation(fields: [articleId], references: [id], onDelete: Cascade)
+}
+
+model AccessAttempt {
+  id            String   @id @default(cuid())
+  articleId     String
+  attemptedAt   DateTime @default(now())
+  selectedRoute String
+  resolvedUrl   String?
+  outcome       String
+  article       Article  @relation(fields: [articleId], references: [id], onDelete: Cascade)
+
+  @@index([articleId, attemptedAt])
+}

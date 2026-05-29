@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>Journal Stack</title>
+  <style>
+    html, body {
+      margin: 0;
+      height: 100%;
+      background: #0f1729;
+      color: #e2e8f0;
+      font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .loading { text-align: center; opacity: 0.85; }
+    .spinner {
+      width: 28px; height: 28px;
+      margin: 0 auto 16px;
+      border: 3px solid rgba(226, 232, 240, 0.25);
+      border-top-color: #e2e8f0;
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+  </style>
+</head>
+<body>
+  <div class="loading">
+    <div class="spinner"></div>
+    <div>Starting Journal Stack...</div>
+  </div>
+</body>
+</html>
