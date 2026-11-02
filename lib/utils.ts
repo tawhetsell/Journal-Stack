@@ -87,3 +87,20 @@ export function joinAuthors(authors: string[]) {
 export function isPdfUrl(value: string | null | undefined) {
   return !!value && /\.pdf($|\?)/i.test(value);
 }
+
+// Links come from feeds and APIs we don't control. Only http(s) is allowed:
+// other schemes (file:, search-ms:, ms-*:) can launch local programs.
+export function safeHttpUrl(value: string | null | undefined) {
+  const trimmed = value?.trim();
+
+  if (!trimmed) {
+    return null;
+  }
+
+  try {
+    const { protocol } = new URL(trimmed);
+    return protocol === "http:" || protocol === "https:" ? trimmed : null;
+  } catch {
+    return null;
+  }
+}

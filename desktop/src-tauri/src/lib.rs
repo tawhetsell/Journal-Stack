@@ -40,6 +40,30 @@ fn clean_path(p: &Path) -> String {
     stripped.replace('\\', "/")
 }
 
+#[derive(Debug, PartialEq)]
+enum Navigation {
+    Stay,
+    OpenInBrowser,
+    Block,
+}
+
+/// Keep internal URLs (Tauri protocol + our loopback server) inside the
+/// webview and send http(s) links to the OS browser. Anything else is blocked:
+/// handing `file:`, `search-ms:`, `ms-*:` etc. to the OS can launch programs.
+fn classify_navigation(url: &tauri::Url) -> Navigation {
+    let host = url.host_str().unwrap_or("");
+    let is_web = matches!(url.scheme(), "http" | "https");
+    let is_loopback = host == "127.0.0.1" || host == "localhost" || host.ends_with(".localhost");
+
+    if url.scheme() == "tauri" || (is_web && is_loopback) {
+        Navigation::Stay
+    } else if is_web {
+        Navigation::OpenInBrowser
+    } else {
+        Navigation::Block
+    }
+}
+
 fn pick_free_port() -> u16 {
     let listener = TcpListener::bind("127.0.0.1:0").expect("failed to bind for port selection");
     listener.local_addr().unwrap().port()
@@ -123,6 +147,7 @@ pub fn run() {
 
             // ── Open window immediately with the loading placeholder ──────
             let handle_for_nav = handle.clone();
+            let nav_log_path = log_path.clone();
             let window = WebviewWindowBuilder::new(
                 &handle,
                 "main",
@@ -131,23 +156,20 @@ pub fn run() {
             .title("Journal Stack")
             .inner_size(1280.0, 860.0)
             .resizable(true)
-            // Keep internal URLs (Tauri protocol + our loopback) inside the
-            // webview; send everything else to the OS browser.
-            .on_navigation(move |url| {
-                let host = url.host_str().unwrap_or("");
-                let scheme = url.scheme();
-                let is_internal = scheme == "tauri"
-                    || host == "127.0.0.1"
-                    || host.ends_with("localhost");
-                if !is_internal {
+            .on_navigation(move |url| match classify_navigation(url) {
+                Navigation::Stay => true,
+                Navigation::OpenInBrowser => {
                     let url_str = url.to_string();
                     let h = handle_for_nav.clone();
                     std::thread::spawn(move || {
                         let _ = h.opener().open_url(&url_str, None::<String>);
                     });
-                    return false;
+                    false
                 }
-                true
+                Navigation::Block => {
+                    log(&nav_log_path, &format!("blocked non-http(s) link: {url}"));
+                    false
+                }
             })
             .build()
             .expect("failed to create webview window");
@@ -262,4 +284,38 @@ pub fn run() {
                 }
             }
         });
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn nav(url: &str) -> Navigation {
+        classify_navigation(&tauri::Url::parse(url).unwrap())
+    }
+
+    #[test]
+    fn internal_urls_stay_in_the_webview() {
+        assert_eq!(nav("http://127.0.0.1:2796/feed"), Navigation::Stay);
+        assert_eq!(nav("http://tauri.localhost/index.html"), Navigation::Stay);
+        assert_eq!(nav("http://localhost:3000/feed"), Navigation::Stay);
+        assert_eq!(nav("tauri://localhost/index.html"), Navigation::Stay);
+    }
+
+    #[test]
+    fn web_links_open_in_the_browser() {
+        assert_eq!(nav("https://doi.org/10.1111/puar.70149"), Navigation::OpenInBrowser);
+        assert_eq!(nav("http://example.com/"), Navigation::OpenInBrowser);
+        // Hosts that merely end in "localhost" are not ours.
+        assert_eq!(nav("https://evillocalhost/"), Navigation::OpenInBrowser);
+    }
+
+    #[test]
+    fn other_schemes_are_blocked() {
+        assert_eq!(nav("file:///C:/Windows/System32/calc.exe"), Navigation::Block);
+        assert_eq!(nav("file://localhost/C:/Windows/System32/calc.exe"), Navigation::Block);
+        assert_eq!(nav(r"search-ms:query=invoice&crumb=location:\\evil\share"), Navigation::Block);
+        assert_eq!(nav("ms-settings:privacy"), Navigation::Block);
+        assert_eq!(nav("javascript:alert(1)"), Navigation::Block);
+    }
 }

@@ -3,7 +3,7 @@ import { fetchArticlesFromCrossref } from "@/lib/sources/crossref";
 import { enrichWithOpenAlex } from "@/lib/sources/openalex";
 import { fetchArticlesFromRss } from "@/lib/sources/rss";
 import type { NormalizedArticleInput, SourceJournal } from "@/lib/types";
-import { normalizeDoi, serializeAuthors } from "@/lib/utils";
+import { normalizeDoi, safeHttpUrl, serializeAuthors } from "@/lib/utils";
 
 async function fetchFromSource(journal: SourceJournal) {
   if (journal.sourceType === "crossref") {
@@ -32,9 +32,9 @@ async function upsertArticle(journalId: string, article: NormalizedArticleInput)
     abstract: article.abstract,
     publicationDate: article.publicationDate,
     authorsJson: serializeAuthors(article.authors),
-    publisherLandingUrl: article.publisherLandingUrl,
-    openAccessUrl: article.openAccessUrl,
-    directPdfUrl: article.directPdfUrl,
+    publisherLandingUrl: safeHttpUrl(article.publisherLandingUrl),
+    openAccessUrl: safeHttpUrl(article.openAccessUrl),
+    directPdfUrl: safeHttpUrl(article.directPdfUrl),
     sourcePayload: article.sourcePayload,
   };
 
@@ -136,10 +136,12 @@ export async function backfillArticleOpenAccess(articleId: string) {
   return db.article.update({
     where: { id: article.id },
     data: {
-      openAccessUrl: article.openAccessUrl ?? enrichment.openAccessUrl,
-      directPdfUrl: article.directPdfUrl ?? enrichment.directPdfUrl,
+      openAccessUrl:
+        safeHttpUrl(article.openAccessUrl) ?? enrichment.openAccessUrl,
+      directPdfUrl: safeHttpUrl(article.directPdfUrl) ?? enrichment.directPdfUrl,
       publisherLandingUrl:
-        article.publisherLandingUrl ?? enrichment.publisherLandingUrl,
+        safeHttpUrl(article.publisherLandingUrl) ??
+        enrichment.publisherLandingUrl,
     },
   });
 }

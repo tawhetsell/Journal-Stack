@@ -2,7 +2,7 @@ import type { Article, Journal } from "@prisma/client";
 
 import { buildGeorgiaTechLibraryRoute, buildGeorgiaTechSearchUrl } from "@/lib/gt";
 import type { AccessAlternate, AccessResult } from "@/lib/types";
-import { isPdfUrl, normalizeDoi } from "@/lib/utils";
+import { isPdfUrl, normalizeDoi, safeHttpUrl } from "@/lib/utils";
 
 type ArticleForResolution = Pick<
   Article,
@@ -29,7 +29,8 @@ export type ArticleRoutes = {
 export function getArticleRoutes(article: ArticleForResolution): ArticleRoutes {
   const doi = normalizeDoi(article.doi);
   const publisherUrl =
-    article.publisherLandingUrl ?? (doi ? `https://doi.org/${doi}` : null);
+    safeHttpUrl(article.publisherLandingUrl) ??
+    (doi ? `https://doi.org/${doi}` : null);
   const georgiaTechUrl = buildGeorgiaTechLibraryRoute({
     doi,
     title: article.title,
@@ -46,8 +47,8 @@ export function getArticleRoutes(article: ArticleForResolution): ArticleRoutes {
     publisherUrl,
     georgiaTechUrl,
     titleSearchUrl,
-    openAccessUrl: article.openAccessUrl ?? null,
-    directPdfUrl: article.directPdfUrl ?? null,
+    openAccessUrl: safeHttpUrl(article.openAccessUrl),
+    directPdfUrl: safeHttpUrl(article.directPdfUrl),
   };
 }
 

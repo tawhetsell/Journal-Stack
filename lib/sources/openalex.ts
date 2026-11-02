@@ -1,4 +1,4 @@
-import { normalizeDoi } from "@/lib/utils";
+import { normalizeDoi, safeHttpUrl } from "@/lib/utils";
 
 type OpenAlexWork = {
   ids?: {
@@ -53,14 +53,13 @@ export async function enrichWithOpenAlex(doi: string | null) {
   return {
     doi: normalizeDoi(work.ids?.doi ?? normalizedDoi),
     openAccessUrl:
-      work.best_oa_location?.pdf_url ??
-      work.best_oa_location?.landing_page_url ??
-      null,
+      safeHttpUrl(work.best_oa_location?.pdf_url) ??
+      safeHttpUrl(work.best_oa_location?.landing_page_url),
     publisherLandingUrl:
-      work.primary_location?.landing_page_url ??
-      work.best_oa_location?.landing_page_url ??
-      null,
+      safeHttpUrl(work.primary_location?.landing_page_url) ??
+      safeHttpUrl(work.best_oa_location?.landing_page_url),
     directPdfUrl:
-      work.primary_location?.pdf_url ?? work.best_oa_location?.pdf_url ?? null,
+      safeHttpUrl(work.primary_location?.pdf_url) ??
+      safeHttpUrl(work.best_oa_location?.pdf_url),
   };
 }

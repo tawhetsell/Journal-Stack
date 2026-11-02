@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 
 import { db } from "@/lib/db";
 import { getArticleRoutes } from "@/lib/resolver";
+import { safeHttpUrl } from "@/lib/utils";
 
 export const runtime = "nodejs";
 
@@ -35,10 +36,19 @@ export async function GET(
 
   const target = new URL(request.url).searchParams.get("target");
   const routes = getArticleRoutes(article);
-  const destination =
+  const destination = safeHttpUrl(
     target === "publisher"
       ? routes.publisherUrl ?? routes.georgiaTechUrl
-      : routes.georgiaTechUrl;
+      : routes.georgiaTechUrl,
+  );
+
+  if (!destination) {
+    return NextResponse.json(
+      { error: "This article has no http(s) link to open." },
+      { status: 400 },
+    );
+  }
+
   const tracking = getRouteSelection(target ?? "institution");
 
   await db.accessAttempt.create({

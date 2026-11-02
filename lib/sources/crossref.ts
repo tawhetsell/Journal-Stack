@@ -3,6 +3,7 @@ import {
   buildSourceId,
   normalizeDoi,
   parseDate,
+  safeHttpUrl,
   stripHtml,
 } from "@/lib/utils";
 import { enrichWithOpenAlex } from "@/lib/sources/openalex";
@@ -76,7 +77,9 @@ export async function fetchArticlesFromCrossref(
       const doi = normalizeDoi(work.DOI ?? null);
       const enrichment = await enrichWithOpenAlex(doi).catch(() => null);
       const directPdfUrl =
-        work.link?.find((link) => link["content-type"]?.includes("pdf"))?.URL ??
+        safeHttpUrl(
+          work.link?.find((link) => link["content-type"]?.includes("pdf"))?.URL,
+        ) ??
         enrichment?.directPdfUrl ??
         null;
 
@@ -96,7 +99,7 @@ export async function fetchArticlesFromCrossref(
           }).filter(Boolean) ?? [],
         publisherLandingUrl:
           enrichment?.publisherLandingUrl ??
-          work.URL ??
+          safeHttpUrl(work.URL) ??
           (doi ? `https://doi.org/${doi}` : null),
         openAccessUrl: enrichment?.openAccessUrl ?? null,
         directPdfUrl,

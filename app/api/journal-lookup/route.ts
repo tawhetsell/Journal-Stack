@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server";
 import Parser from "rss-parser";
 
+import { safeHttpUrl } from "@/lib/utils";
+
 export const runtime = "nodejs";
 
 const parser = new Parser();
@@ -39,17 +41,8 @@ async function lookupCrossref(issn: string) {
   });
 }
 
-function isHttpUrl(value: string) {
-  try {
-    const parsed = new URL(value);
-    return parsed.protocol === "http:" || parsed.protocol === "https:";
-  } catch {
-    return false;
-  }
-}
-
 async function lookupRss(feedUrl: string) {
-  if (!isHttpUrl(feedUrl)) {
+  if (!safeHttpUrl(feedUrl)) {
     return NextResponse.json(
       { error: "RSS URL must start with http:// or https://." },
       { status: 400 },
@@ -76,7 +69,7 @@ async function lookupRss(feedUrl: string) {
 
   return NextResponse.json({
     title: feed.title ?? null,
-    homepageUrl: feed.link ?? null,
+    homepageUrl: safeHttpUrl(feed.link),
   });
 }
 

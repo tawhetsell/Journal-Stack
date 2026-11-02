@@ -5,6 +5,7 @@ import {
   buildSourceId,
   normalizeDoi,
   parseDate,
+  safeHttpUrl,
   stripHtml,
 } from "@/lib/utils";
 import { enrichWithOpenAlex } from "@/lib/sources/openalex";
@@ -85,7 +86,7 @@ export async function fetchArticlesFromRss(
       const doi = extractDoi(typedItem);
       const enrichment = await enrichWithOpenAlex(doi).catch(() => null);
       const publisherLandingUrl =
-        getFirstString(typedItem.link) ??
+        safeHttpUrl(getFirstString(typedItem.link)) ??
         enrichment?.publisherLandingUrl ??
         (doi ? `https://doi.org/${doi}` : null);
 
