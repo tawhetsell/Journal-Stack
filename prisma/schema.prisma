@@ -71,3 +71,10 @@ model AccessAttempt {
 
   @@index([articleId, attemptedAt])
 }
+
+// Single-row-per-key app settings, e.g. the user's library ("institution").
+model AppSetting {
+  key       String   @id
+  value     String
+  updatedAt DateTime @updatedAt
+}

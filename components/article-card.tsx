@@ -1,7 +1,9 @@
 import Link from "next/link";
 import type { Article, Journal, SavedArticle } from "@prisma/client";
 
+import { InstitutionLink } from "@/components/institution";
 import { OpenAccessIndicator } from "@/components/open-access-indicator";
+import { SaveButton } from "@/components/save-button";
 import { getArticleRoutes } from "@/lib/resolver";
 import { formatDate, joinAuthors, parseAuthors } from "@/lib/utils";
 
@@ -54,17 +56,19 @@ export function ArticleCard({ article }: ArticleCardProps) {
           {routes.publisherUrl ? (
             <a
               href={`/api/articles/${article.id}/open?target=publisher`}
-              className="rounded-full bg-accent px-4 py-2 text-sm font-semibold text-white hover:-translate-y-0.5 hover:bg-accent-strong"
+              className="rounded-full bg-accent-fill px-4 py-2 text-sm font-semibold text-on-accent hover:-translate-y-0.5 hover:bg-accent-fill-strong"
             >
               Open journal link
             </a>
           ) : null}
-          <a
+          <InstitutionLink
             href={`/api/articles/${article.id}/open?target=institution`}
             className="rounded-full border border-line bg-surface-strong/70 px-4 py-2 text-sm font-semibold text-foreground hover:-translate-y-0.5 hover:border-accent/40 hover:text-accent"
-          >
-            Open via Institution
-          </a>
+          />
+          <SaveButton
+            articleId={article.id}
+            saved={Boolean(article.savedArticle)}
+          />
         </div>
       </div>
     </article>

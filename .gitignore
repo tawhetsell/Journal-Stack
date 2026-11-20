@@ -66,6 +66,7 @@ next-env.d.ts
 
 # --- Local-only: internal docs, editor config, unused scaffold assets ---
 /AGENTS.md
+/HANDOFF.md
 /TAURI_PORTING_PLAN.md
 /PROJECT_CONTEXT.md
 /docs/
@@ -75,3 +76,9 @@ next-env.d.ts
 /public/file.svg
 /public/globe.svg
 /public/window.svg
+
+# --- Local-only: AI assistant config and browser-test output ---
+/.claude/
+/CLAUDE.md
+/CLAUDE.local.md
+/.playwright-mcp/

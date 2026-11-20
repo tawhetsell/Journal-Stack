@@ -34,10 +34,18 @@ export type AccessResult = {
     | "open_access"
     | "gt_route"
     | "publisher_page"
-    | "library_fallback"
     | "unavailable";
   url: string | null;
   label: string;
   explanation: string;
   alternates: AccessAlternate[];
+};
+
+// Server actions return these instead of throwing, so forms can show the
+// problem inline rather than crashing to the error page.
+export type ActionResult = { ok: true } | { ok: false; error: string };
+
+export type RefreshSummary = {
+  message: string;
+  failed: boolean;
 };

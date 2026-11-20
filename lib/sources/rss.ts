@@ -2,6 +2,7 @@ import Parser from "rss-parser";
 
 import type { NormalizedArticleInput, SourceJournal } from "@/lib/types";
 import {
+  FETCH_TIMEOUT_MS,
   buildSourceId,
   normalizeDoi,
   parseDate,
@@ -10,47 +11,134 @@ import {
 } from "@/lib/utils";
 import { enrichWithOpenAlex } from "@/lib/sources/openalex";
 
-const parser = new Parser();
+// rss-parser only copies a fixed list of item fields and keeps just the first
+// <dc:creator>. These custom fields expose every author element plus the DOI
+// fields publishers commonly use. The explicit type arguments stop rss-parser
+// from inferring an item shape out of the field names; items are read as
+// untyped records below.
+type FeedRecord = Record<string, unknown>;
+
+const parser = new Parser<FeedRecord, FeedRecord>({
+  customFields: {
+    item: [
+      ["dc:creator", "creators", { keepArray: true }],
+      ["author", "authors", { keepArray: true }],
+      ["prism:doi", "prismDoi"],
+      ["dc:identifier", "dcIdentifier"],
+    ],
+  },
+});
+
+const DOI_PATTERN = /10\.\d{4,9}\/[-._;()/:A-Z0-9]+/i;
 
 function getFirstString(value: unknown) {
   return typeof value === "string" && value.trim().length > 0 ? value.trim() : null;
 }
 
-function extractAuthors(item: Record<string, unknown>) {
-  const candidates = [
-    item.creator,
-    item.author,
-    item["dc:creator"],
-    item["dc:creator[]"],
-  ];
+// xml2js gives a plain string, `{ _: text }` for an element with attributes,
+// or `{ name: [text] }` for an Atom <author>.
+function textOf(value: unknown): string | null {
+  if (typeof value === "string") {
+    return getFirstString(value);
+  }
 
-  const authors = candidates
-    .flatMap((value) => (Array.isArray(value) ? value : [value]))
-    .flatMap((value) => (typeof value === "string" ? value.split(/,|;| and /i) : []))
-    .map((value) => value.trim())
+  if (value && typeof value === "object") {
+    const record = value as Record<string, unknown>;
+    const name = Array.isArray(record.name) ? record.name[0] : record.name;
+    return textOf(record._) ?? textOf(name);
+  }
+
+  return null;
+}
+
+function textList(value: unknown) {
+  const values = Array.isArray(value) ? value : [value];
+  return values.map(textOf).filter((text): text is string => text !== null);
+}
+
+// A single author element sometimes holds the whole byline.
+function splitByline(value: string) {
+  // Semicolon-separated lists keep "Last, First" names intact.
+  if (value.includes(";")) {
+    return value.split(";");
+  }
+
+  const parts = value
+    .split(/,|\s+and\s+|\s+&\s+/i)
+    .map((part) => part.trim())
     .filter(Boolean);
+  const commaCount = value.split(",").length - 1;
 
-  return Array.from(new Set(authors));
+  // "Smith, Jane" is one author written surname-first, not two authors.
+  if (parts.length === 2 && commaCount === 1 && !/\s/.test(parts[0])) {
+    return [`${parts[1]} ${parts[0]}`];
+  }
+
+  return parts;
+}
+
+function extractAuthors(item: Record<string, unknown>) {
+  const creators = textList(item.creators);
+  const authors = textList(item.authors);
+  const names =
+    creators.length > 0
+      ? creators
+      : authors.length > 0
+        ? authors
+        : textList([item.creator, item.author]);
+  const unique = Array.from(new Set(names));
+  // One element per author is taken as written; a lone element may be a byline.
+  const split = unique.length === 1 ? splitByline(unique[0]) : unique;
+
+  return Array.from(new Set(split.map((name) => name.trim()).filter(Boolean)));
+}
+
+function findDoi(value: unknown) {
+  return getFirstString(value)?.match(DOI_PATTERN)?.[0] ?? null;
+}
+
+function urlCandidates(item: Record<string, unknown>) {
+  return [item.guid, item.id, item.link];
+}
+
+// A DOI lifted out of a URL can drag along a trailing path segment or
+// punctuation ("…/10.3389/fpsyg.2024.1/full").
+function trimUrlDoi(doi: string) {
+  return doi
+    .replace(/\/(?:full|abstract|pdf|epdf|html|meta|summary)$/i, "")
+    .replace(/[.,;:]+$/, "");
 }
 
 function extractDoi(item: Record<string, unknown>) {
-  const candidates = [
-    getFirstString(item.doi),
-    getFirstString(item["prism:doi"]),
-    getFirstString(item.guid),
-    getFirstString(item.id),
-    getFirstString(item.link),
-  ];
+  // Explicit DOI fields are exact, so prefer them over anything URL-derived.
+  for (const candidate of [item.prismDoi, item.dcIdentifier]) {
+    const doi = findDoi(candidate);
 
-  for (const candidate of candidates) {
-    if (!candidate) {
-      continue;
+    if (doi) {
+      return normalizeDoi(doi);
     }
+  }
 
-    const match = candidate.match(/10\.\d{4,9}\/[-._;()/:A-Z0-9]+/i);
+  for (const candidate of urlCandidates(item)) {
+    const doi = findDoi(candidate);
 
-    if (match) {
-      return normalizeDoi(match[0]);
+    if (doi) {
+      return normalizeDoi(trimUrlDoi(doi));
+    }
+  }
+
+  return null;
+}
+
+// Frozen on purpose: sourceId has always embedded the raw URL-derived DOI, and
+// it is the key existing rows are matched on. Building it from the improved
+// extractDoi() would change the key and duplicate every cached RSS article.
+function sourceKeyDoi(item: Record<string, unknown>) {
+  for (const candidate of urlCandidates(item)) {
+    const doi = findDoi(candidate);
+
+    if (doi) {
+      return normalizeDoi(doi);
     }
   }
 
@@ -70,10 +158,11 @@ export async function fetchArticlesFromRss(
       "User-Agent": "literature-access-app/0.1",
     },
     cache: "no-store",
+    signal: AbortSignal.timeout(FETCH_TIMEOUT_MS),
   });
 
   if (!response.ok) {
-    throw new Error(`RSS fetch failed for ${journal.title}`);
+    throw new Error(`RSS feed returned HTTP ${response.status}`);
   }
 
   const xml = await response.text();
@@ -82,7 +171,7 @@ export async function fetchArticlesFromRss(
 
   return Promise.all(
     items.map(async (item) => {
-      const typedItem = item as Record<string, unknown>;
+      const typedItem: FeedRecord = item;
       const doi = extractDoi(typedItem);
       const enrichment = await enrichWithOpenAlex(doi).catch(() => null);
       const publisherLandingUrl =
@@ -93,13 +182,13 @@ export async function fetchArticlesFromRss(
       return {
         sourceId: buildSourceId([
           journal.id,
-          doi,
+          sourceKeyDoi(typedItem),
           getFirstString(typedItem.guid),
           getFirstString(typedItem.link),
           getFirstString(typedItem.title),
         ]),
         doi: enrichment?.doi ?? doi,
-        title: getFirstString(typedItem.title) ?? "Untitled article",
+        title: stripHtml(getFirstString(typedItem.title)) ?? "Untitled article",
         abstract:
           stripHtml(getFirstString(typedItem.contentSnippet)) ??
           stripHtml(getFirstString(typedItem.content)) ??

@@ -2,7 +2,9 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 
 import { AppShell } from "@/components/app-shell";
+import { InstitutionLink } from "@/components/institution";
 import { OpenAccessIndicator } from "@/components/open-access-indicator";
+import { SaveButton } from "@/components/save-button";
 import { getArticleById } from "@/lib/articles";
 import { getArticleRoutes } from "@/lib/resolver";
 import { formatDate, joinAuthors, parseAuthors } from "@/lib/utils";
@@ -91,17 +93,20 @@ export default async function ArticlePage({ params }: ArticlePageProps) {
                 {routes.publisherUrl ? (
                   <a
                     href={`/api/articles/${article.id}/open?target=publisher`}
-                    className="rounded-full bg-accent px-5 py-3 text-sm font-semibold text-white hover:-translate-y-0.5 hover:bg-accent-strong"
+                    className="rounded-full bg-accent-fill px-5 py-3 text-sm font-semibold text-on-accent hover:-translate-y-0.5 hover:bg-accent-fill-strong"
                   >
                     Open journal link
                   </a>
                 ) : null}
-                <a
+                <InstitutionLink
                   href={`/api/articles/${article.id}/open?target=institution`}
                   className="rounded-full border border-line bg-surface-strong/70 px-5 py-3 text-sm font-semibold text-foreground hover:-translate-y-0.5 hover:border-accent/40 hover:text-accent"
-                >
-                  Open via Institution
-                </a>
+                />
+                <SaveButton
+                  articleId={article.id}
+                  saved={Boolean(article.savedArticle)}
+                  size="md"
+                />
               </div>
             </div>
             <div className="max-w-sm rounded-[1.5rem] border border-line bg-surface-strong/60 p-5">
@@ -109,8 +114,9 @@ export default async function ArticlePage({ params }: ArticlePageProps) {
                 Link note
               </p>
               <p className="mt-3 text-sm leading-7 text-muted">
-                `Open journal link` takes you straight to the publisher-side
-                article page. `Open via Institution` takes you to the library
+                <strong>Open journal link</strong> takes you straight to the
+                publisher-side article page.{" "}
+                <strong>Open via Institution</strong> takes you to the library
                 resolver page for the same article.
               </p>
             </div>

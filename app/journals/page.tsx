@@ -1,10 +1,11 @@
 import Link from "next/link";
 
-import { refreshJournalAction, toggleFollowAction } from "@/app/actions";
+import { toggleFollowAction } from "@/app/actions";
 import { AppShell } from "@/components/app-shell";
 import { DeleteJournalButton } from "@/components/delete-journal-button";
 import { JournalForm, type JournalFormValues } from "@/components/journal-form";
 import { LocalStats } from "@/components/local-stats";
+import { RefreshButton } from "@/components/refresh-button";
 import { getJournalDirectory } from "@/lib/journals";
 import { site } from "@/lib/site";
 
@@ -84,7 +85,9 @@ export default async function JournalsPage({
               )}
             </div>
             <div className="w-full lg:max-w-xl">
-              <JournalForm journal={editValues} />
+              {/* The key remounts the form when the journal being edited
+                  changes; otherwise it keeps the previous journal's values. */}
+              <JournalForm key={editing?.id ?? "new"} journal={editValues} />
             </div>
           </div>
         </section>
@@ -128,20 +131,16 @@ export default async function JournalsPage({
                     <input type="hidden" name="journalId" value={journal.id} />
                     <button
                       type="submit"
-                      className="rounded-full bg-accent px-4 py-2 text-sm font-semibold text-white hover:-translate-y-0.5 hover:bg-accent-strong"
+                      className="rounded-full bg-accent-fill px-4 py-2 text-sm font-semibold text-on-accent hover:-translate-y-0.5 hover:bg-accent-fill-strong"
                     >
                       {journal.follow ? "Unfollow" : "Follow"}
                     </button>
                   </form>
-                  <form action={refreshJournalAction}>
-                    <input type="hidden" name="journalId" value={journal.id} />
-                    <button
-                      type="submit"
-                      className="rounded-full border border-line px-4 py-2 text-sm font-semibold text-foreground hover:-translate-y-0.5 hover:border-accent/40 hover:text-accent"
-                    >
-                      Refresh source
-                    </button>
-                  </form>
+                  <RefreshButton
+                    journalId={journal.id}
+                    label="Refresh source"
+                    className="rounded-full border border-line px-4 py-2 text-sm font-semibold text-foreground hover:-translate-y-0.5 hover:border-accent/40 hover:text-accent"
+                  />
                   <Link
                     href={`/journals?edit=${journal.id}`}
                     className="rounded-full border border-line px-4 py-2 text-sm font-semibold text-foreground hover:-translate-y-0.5 hover:border-accent/40 hover:text-accent"

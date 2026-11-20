@@ -7,7 +7,7 @@ export function OpenAccessIndicator({
 }: OpenAccessIndicatorProps) {
   return (
     <span
-      className="inline-flex items-center gap-1 rounded-full border border-emerald-200 bg-emerald-50 px-2.5 py-1 text-xs font-semibold uppercase tracking-[0.18em] text-emerald-700"
+      className="inline-flex items-center gap-1 rounded-full border border-success-line bg-success-soft px-2.5 py-1 text-xs font-semibold uppercase tracking-[0.18em] text-success"
       aria-label="Open access available"
       title="Open access available"
     >

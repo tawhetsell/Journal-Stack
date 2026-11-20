@@ -1,38 +1,17 @@
 "use client";
 
-import { useSyncExternalStore } from "react";
+import { useTheme } from "@/components/use-theme";
+import { themeCounterpart, themeMode } from "@/lib/themes";
 
-type Theme = "light" | "dark";
-
-function subscribe(callback: () => void) {
-  window.addEventListener("themechange", callback);
-  window.addEventListener("storage", callback);
-  return () => {
-    window.removeEventListener("themechange", callback);
-    window.removeEventListener("storage", callback);
-  };
-}
-
-function getSnapshot(): Theme {
-  return document.documentElement.dataset.theme === "dark" ? "dark" : "light";
-}
-
-function getServerSnapshot(): Theme {
-  return "light";
-}
-
-function applyTheme(theme: Theme) {
-  document.documentElement.dataset.theme = theme;
-  window.localStorage.setItem("theme", theme);
-  window.dispatchEvent(new Event("themechange"));
-}
-
+// Switches between the light and dark theme of the current family (for
+// example Flexoki Light and Flexoki Dark). Other themes are chosen in Settings.
 export function ThemeToggle() {
-  const theme = useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);
-  const nextTheme = theme === "dark" ? "light" : "dark";
+  const theme = useTheme();
+  const isDark = themeMode(theme) === "dark";
+  const nextMode = isDark ? "light" : "dark";
 
   function handleToggle() {
-    applyTheme(nextTheme);
+    window.journalStackSetTheme?.(themeCounterpart[theme]);
   }
 
   return (
@@ -40,11 +19,11 @@ export function ThemeToggle() {
       type="button"
       onClick={handleToggle}
       suppressHydrationWarning
-      aria-label={`Switch to ${nextTheme} mode`}
-      title={`Switch to ${nextTheme} mode`}
+      aria-label={`Switch to ${nextMode} mode`}
+      title={`Switch to ${nextMode} mode`}
       className="flex h-11 w-11 items-center justify-center rounded-full border border-line bg-surface-strong/80 text-foreground hover:-translate-y-0.5 hover:border-accent/40 hover:text-accent"
     >
-      {theme === "dark" ? (
+      {isDark ? (
         <svg
           aria-hidden="true"
           viewBox="0 0 24 24"

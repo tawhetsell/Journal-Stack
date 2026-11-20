@@ -102,7 +102,7 @@ export function SiteNav() {
             title={item.label}
             className={
               isActive
-                ? "inline-flex h-12 items-center gap-2.5 rounded-full border border-accent/55 bg-accent px-4 text-white shadow-[0_16px_34px_-22px_rgba(105,198,191,0.95)] transition"
+                ? "inline-flex h-12 items-center gap-2.5 rounded-full border border-accent/55 bg-accent-fill px-4 text-on-accent shadow-[0_16px_34px_-22px_var(--accent-glow)] transition"
                 : "inline-flex h-12 items-center gap-2.5 rounded-full border border-line bg-surface-strong/55 px-4 text-foreground/80 transition hover:-translate-y-0.5 hover:border-accent/40 hover:text-accent"
             }
           >

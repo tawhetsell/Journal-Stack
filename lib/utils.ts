@@ -11,15 +11,59 @@ export function normalizeDoi(value: string | null | undefined) {
     .toLowerCase();
 }
 
+// Applied to every outbound metadata request so one hung server cannot stall
+// a whole refresh.
+export const FETCH_TIMEOUT_MS = 15_000;
+
+const NAMED_ENTITIES: Record<string, string> = {
+  amp: "&",
+  lt: "<",
+  gt: ">",
+  quot: '"',
+  apos: "'",
+  nbsp: " ",
+  ndash: "\u2013",
+  mdash: "\u2014",
+  hellip: "\u2026",
+  lsquo: "\u2018",
+  rsquo: "\u2019",
+  ldquo: "\u201c",
+  rdquo: "\u201d",
+};
+
+// Single pass, so "&amp;lt;" decodes to "&lt;" rather than "<".
+export function decodeEntities(value: string) {
+  return value.replace(/&(#x[0-9a-f]+|#\d+|[a-z]+);/gi, (match, body: string) => {
+    if (body.startsWith("#")) {
+      const code =
+        body[1].toLowerCase() === "x"
+          ? Number.parseInt(body.slice(2), 16)
+          : Number.parseInt(body.slice(1), 10);
+
+      return code > 0 && code <= 0x10ffff ? String.fromCodePoint(code) : match;
+    }
+
+    return NAMED_ENTITIES[body.toLowerCase()] ?? match;
+  });
+}
+
+// Inline formatting (<i>, <sub>, <jats:italic>, ...) is removed without leaving
+// a gap, so "H<sub>2</sub>O" stays "H2O"; block tags become spaces.
+const INLINE_TAG_PATTERN =
+  /<\/?(?:[a-z]+:)?(?:i|b|u|em|strong|sub|sup|sc|scp|italic|bold)\b[^>]*>/gi;
+
 export function stripHtml(value: string | null | undefined) {
   if (!value) {
     return null;
   }
 
-  return value
-    .replace(/<[^>]+>/g, " ")
+  const text = decodeEntities(
+    value.replace(INLINE_TAG_PATTERN, "").replace(/<[^>]+>/g, " "),
+  )
     .replace(/\s+/g, " ")
     .trim();
+
+  return text || null;
 }
 
 export function parseDate(value: string | Date | null | undefined) {

@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import Parser from "rss-parser";
 
-import { safeHttpUrl } from "@/lib/utils";
+import { FETCH_TIMEOUT_MS, safeHttpUrl } from "@/lib/utils";
 
 export const runtime = "nodejs";
 
@@ -19,6 +19,7 @@ async function lookupCrossref(issn: string) {
     {
       headers: { "User-Agent": "literature-access-app/0.1" },
       cache: "no-store",
+      signal: AbortSignal.timeout(FETCH_TIMEOUT_MS),
     },
   );
 
@@ -55,6 +56,7 @@ async function lookupRss(feedUrl: string) {
       "User-Agent": "literature-access-app/0.1",
     },
     cache: "no-store",
+    signal: AbortSignal.timeout(FETCH_TIMEOUT_MS),
   });
 
   if (!response.ok) {

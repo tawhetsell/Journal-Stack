@@ -1,4 +1,4 @@
-import { normalizeDoi, safeHttpUrl } from "@/lib/utils";
+import { FETCH_TIMEOUT_MS, normalizeDoi, safeHttpUrl } from "@/lib/utils";
 
 type OpenAlexWork = {
   ids?: {
@@ -35,6 +35,7 @@ export async function enrichWithOpenAlex(doi: string | null) {
       Accept: "application/json",
     },
     cache: "no-store",
+    signal: AbortSignal.timeout(FETCH_TIMEOUT_MS),
   });
 
   if (!response.ok) {

@@ -1,6 +1,6 @@
 import type { Article, Journal } from "@prisma/client";
 
-import { buildGeorgiaTechLibraryRoute, buildGeorgiaTechSearchUrl } from "@/lib/gt";
+import { buildInstitutionUrl, type Institution } from "@/lib/institutions";
 import type { AccessAlternate, AccessResult } from "@/lib/types";
 import { isPdfUrl, normalizeDoi, safeHttpUrl } from "@/lib/utils";
 
@@ -20,33 +20,36 @@ type ArticleForResolution = Pick<
 export type ArticleRoutes = {
   doi: string | null;
   publisherUrl: string | null;
-  georgiaTechUrl: string;
-  titleSearchUrl: string;
+  // Null when no institution was passed in.
+  institutionUrl: string | null;
   openAccessUrl: string | null;
   directPdfUrl: string | null;
 };
 
-export function getArticleRoutes(article: ArticleForResolution): ArticleRoutes {
+export function getArticleRoutes(
+  article: ArticleForResolution,
+  institution: Institution | null = null,
+): ArticleRoutes {
   const doi = normalizeDoi(article.doi);
   const publisherUrl =
     safeHttpUrl(article.publisherLandingUrl) ??
     (doi ? `https://doi.org/${doi}` : null);
-  const georgiaTechUrl = buildGeorgiaTechLibraryRoute({
-    doi,
-    title: article.title,
-    journalTitle: article.journal?.title,
-    issn: article.journal?.issnElectronic ?? article.journal?.issnPrint ?? null,
-    publicationDate: article.publicationDate?.toISOString().slice(0, 10) ?? null,
-  });
-  const titleSearchUrl = buildGeorgiaTechSearchUrl(
-    [article.title, article.journal?.title].filter(Boolean).join(" "),
-  );
+  const institutionUrl = institution
+    ? buildInstitutionUrl(institution.resolverUrl, {
+        doi,
+        title: article.title,
+        journalTitle: article.journal?.title,
+        issn:
+          article.journal?.issnElectronic ?? article.journal?.issnPrint ?? null,
+        publicationDate:
+          article.publicationDate?.toISOString().slice(0, 10) ?? null,
+      })
+    : null;
 
   return {
     doi,
     publisherUrl,
-    georgiaTechUrl,
-    titleSearchUrl,
+    institutionUrl,
     openAccessUrl: safeHttpUrl(article.openAccessUrl),
     directPdfUrl: safeHttpUrl(article.directPdfUrl),
   };
@@ -65,15 +68,12 @@ function withUniqueAlternates(alternates: AccessAlternate[]) {
   });
 }
 
-export function resolveAccess(article: ArticleForResolution): AccessResult {
-  const {
-    doi,
-    publisherUrl,
-    georgiaTechUrl,
-    titleSearchUrl,
-    openAccessUrl,
-    directPdfUrl,
-  } = getArticleRoutes(article);
+export function resolveAccess(
+  article: ArticleForResolution,
+  institution: Institution | null = null,
+): AccessResult {
+  const { publisherUrl, institutionUrl, openAccessUrl, directPdfUrl } =
+    getArticleRoutes(article, institution);
 
   const alternates: AccessAlternate[] = [];
 
@@ -81,10 +81,9 @@ export function resolveAccess(article: ArticleForResolution): AccessResult {
     alternates.push({ label: "Open publisher page", url: publisherUrl });
   }
 
-  alternates.push({
-    label: "Open via Institution",
-    url: georgiaTechUrl,
-  });
+  if (institutionUrl) {
+    alternates.push({ label: "Open via Institution", url: institutionUrl });
+  }
 
   if (openAccessUrl) {
     return {
@@ -108,10 +107,12 @@ export function resolveAccess(article: ArticleForResolution): AccessResult {
     };
   }
 
-  if (doi || article.title) {
+  if (institutionUrl) {
     return {
+      // Named for the first institution the app supported; kept because the
+      // value is stored in AccessAttempt.selectedRoute.
       status: "gt_route",
-      url: georgiaTechUrl,
+      url: institutionUrl,
       label: "Open via Institution",
       explanation:
         "This sends you to the institution resolver with article metadata, which is closer to the library link-resolver workflow than a generic site search.",
@@ -125,19 +126,17 @@ export function resolveAccess(article: ArticleForResolution): AccessResult {
       url: publisherUrl,
       label: "Open publisher page",
       explanation:
-        "No stronger route was found, so the safest fallback is the article's publisher landing page.",
-      alternates: withUniqueAlternates([
-        { label: "Try library search", url: titleSearchUrl },
-      ]),
+        "No open-access copy was found and no institution is set, so the route is the article's publisher landing page.",
+      alternates: [],
     };
   }
 
   return {
-    status: "library_fallback",
-    url: titleSearchUrl,
-    label: "Try library link",
+    status: "unavailable",
+    url: null,
+    label: "No link available",
     explanation:
-      "Metadata is thin, so the fallback is a direct search in the library discovery interface.",
+      "The article has no DOI or publisher link, and no institution is set to search through.",
     alternates: [],
   };
 }

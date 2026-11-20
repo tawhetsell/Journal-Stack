@@ -1,5 +1,8 @@
 @import "tailwindcss";
 
+/* Colour themes. Each block below sets the same variables; pick one with
+   <html data-theme="…">. The list of ids lives in lib/themes.ts and must
+   match the selectors here. :root doubles as Journal Stack Light. */
 :root {
   --background: #f6f1e8;
   --foreground: #18313d;
@@ -16,13 +19,33 @@
   --accent: #0f766e;
   --accent-strong: #134e4a;
   --accent-soft: rgba(15, 118, 110, 0.12);
+  --accent-glow: rgba(105, 198, 191, 0.95);
+  --on-accent: #ffffff;
+  /* Solid buttons and the active tab. Follows the accent unless a theme
+     paints them differently (Modus Operandi uses a pale blue). */
+  --accent-fill: var(--accent);
+  --accent-fill-strong: var(--accent-strong);
+  --danger: oklch(63.7% 0.237 25.331);
+  --success: oklch(50.8% 0.118 165.612);
+  --success-soft: oklch(97.9% 0.021 166.113);
+  --success-line: oklch(90.5% 0.093 164.15);
+  --selection: rgba(15, 118, 110, 0.18);
   --shadow: 0 22px 64px rgba(20, 38, 48, 0.13);
+  --card-sheen: rgba(255, 255, 255, 0.5);
+  --card-edge: rgba(255, 255, 255, 0.6);
+  --masthead-sheen: rgba(255, 255, 255, 0.2);
+  --masthead-glow: rgba(15, 118, 110, 0.08);
+  --masthead-start: rgba(255, 252, 246, 0.74);
+  --masthead-end: rgba(255, 250, 243, 0.58);
+  --masthead-edge: rgba(255, 255, 255, 0.6);
+  --masthead-ring: rgba(24, 49, 61, 0.04);
   --font-sans: "Avenir Next", "Segoe UI", "Trebuchet MS", sans-serif;
   --font-display: "Iowan Old Style", "Palatino Linotype", "Book Antiqua", serif;
   --font-mono: "SFMono-Regular", "Consolas", "Liberation Mono", monospace;
   color-scheme: light;
 }
 
+/* Journal Stack Dark */
 :root[data-theme="dark"] {
   --background: #0f171c;
   --foreground: #e5edf0;
@@ -39,7 +62,166 @@
   --accent: #34b8aa;
   --accent-strong: #278d82;
   --accent-soft: rgba(52, 184, 170, 0.12);
+  --success: #5fd3a8;
+  --success-soft: rgba(52, 211, 153, 0.12);
+  --success-line: rgba(52, 211, 153, 0.32);
   --shadow: 0 18px 60px rgba(0, 0, 0, 0.35);
+  --card-sheen: rgba(255, 255, 255, 0.05);
+  --card-edge: rgba(255, 255, 255, 0.06);
+  --masthead-sheen: rgba(255, 255, 255, 0.04);
+  --masthead-glow: rgba(52, 184, 170, 0.12);
+  --masthead-start: rgba(24, 36, 43, 0.9);
+  --masthead-end: rgba(19, 29, 35, 0.82);
+  --masthead-edge: rgba(255, 255, 255, 0.08);
+  --masthead-ring: rgba(229, 237, 240, 0.04);
+  color-scheme: dark;
+}
+
+/* Flexoki Light — https://stephango.com/flexoki (MIT). Ink on warm paper:
+   cards are the paper, the page behind them is a shade darker. */
+:root[data-theme="flexoki-light"] {
+  --background: #f2f0e5;
+  --foreground: #100f0f;
+  --surface: rgba(255, 252, 240, 0.94);
+  --surface-strong: #fffcf0;
+  --muted: #6f6e69;
+  --line: #cecdc3;
+  --grid-line: rgba(16, 15, 15, 0.045);
+  --wash-left: rgba(250, 238, 198, 0.55);
+  --wash-right: rgba(225, 236, 235, 0.6);
+  --wash-bottom: transparent;
+  --background-start: #f2f0e5;
+  --background-end: #e6e4d9;
+  --accent: #24837b;
+  --accent-strong: #1c6c66;
+  --accent-soft: rgba(36, 131, 123, 0.12);
+  --accent-glow: rgba(36, 131, 123, 0.55);
+  --on-accent: #fffcf0;
+  --danger: #af3029;
+  --success: #536907;
+  --success-soft: #edeecf;
+  --success-line: #cdd597;
+  --selection: rgba(36, 131, 123, 0.2);
+  --shadow: 0 10px 30px rgba(16, 15, 15, 0.07);
+  --card-sheen: transparent;
+  --card-edge: rgba(255, 255, 255, 0.5);
+  --masthead-sheen: transparent;
+  --masthead-glow: rgba(36, 131, 123, 0.06);
+  --masthead-start: rgba(255, 252, 240, 0.92);
+  --masthead-end: rgba(255, 252, 240, 0.82);
+  --masthead-edge: rgba(255, 255, 255, 0.5);
+  --masthead-ring: rgba(16, 15, 15, 0.04);
+  color-scheme: light;
+}
+
+/* Flexoki Dark */
+:root[data-theme="flexoki-dark"] {
+  --background: #100f0f;
+  --foreground: #cecdc3;
+  --surface: rgba(28, 27, 26, 0.94);
+  --surface-strong: #282726;
+  --muted: #878580;
+  --line: #343331;
+  --grid-line: rgba(206, 205, 195, 0.04);
+  --wash-left: rgba(36, 131, 123, 0.1);
+  --wash-right: rgba(32, 94, 166, 0.08);
+  --wash-bottom: transparent;
+  --background-start: #100f0f;
+  --background-end: #100f0f;
+  --accent: #3aa99f;
+  --accent-strong: #5abdac;
+  --accent-soft: rgba(58, 169, 159, 0.14);
+  --accent-glow: rgba(58, 169, 159, 0.5);
+  --on-accent: #100f0f;
+  --danger: #e8705f;
+  --success: #879a39;
+  --success-soft: #1a1e0c;
+  --success-line: #3d4c07;
+  --selection: rgba(58, 169, 159, 0.28);
+  --shadow: 0 18px 50px rgba(0, 0, 0, 0.45);
+  --card-sheen: transparent;
+  --card-edge: rgba(255, 252, 240, 0.04);
+  --masthead-sheen: transparent;
+  --masthead-glow: rgba(58, 169, 159, 0.08);
+  --masthead-start: rgba(28, 27, 26, 0.94);
+  --masthead-end: rgba(28, 27, 26, 0.86);
+  --masthead-edge: rgba(255, 252, 240, 0.05);
+  --masthead-ring: rgba(206, 205, 195, 0.04);
+  color-scheme: dark;
+}
+
+/* Modus Operandi Tinted — https://protesilaos.com/emacs/modus-themes.
+   Black text on light ochre, chosen for maximum legibility. */
+:root[data-theme="modus-operandi-tinted"] {
+  --background: #efe9dd;
+  --foreground: #000000;
+  --surface: rgba(251, 247, 240, 0.95);
+  --surface-strong: #fbf7f0;
+  --muted: #595959;
+  --line: #c9b9b0;
+  --grid-line: rgba(0, 0, 0, 0.05);
+  --wash-left: rgba(224, 242, 250, 0.6);
+  --wash-right: rgba(236, 237, 255, 0.7);
+  --wash-bottom: transparent;
+  --background-start: #efe9dd;
+  --background-end: #dfd5cf;
+  --accent: #0031a9;
+  --accent-strong: #0000b0;
+  --accent-soft: rgba(0, 49, 169, 0.1);
+  --accent-fill: #bfc9ff;
+  --accent-fill-strong: #a9b7ff;
+  --accent-glow: rgba(0, 49, 169, 0.3);
+  --on-accent: #0000b0;
+  --danger: #a60000;
+  --success: #006300;
+  --success-soft: #e0f6e0;
+  --success-line: #b3fabf;
+  --selection: #c2bcb5;
+  --shadow: 0 12px 36px rgba(0, 0, 0, 0.08);
+  --card-sheen: transparent;
+  --card-edge: rgba(255, 255, 255, 0.5);
+  --masthead-sheen: transparent;
+  --masthead-glow: rgba(0, 49, 169, 0.05);
+  --masthead-start: rgba(251, 247, 240, 0.94);
+  --masthead-end: rgba(251, 247, 240, 0.84);
+  --masthead-edge: rgba(255, 255, 255, 0.5);
+  --masthead-ring: rgba(0, 0, 0, 0.05);
+  color-scheme: light;
+}
+
+/* Modus Vivendi Tinted — the dark counterpart: white on deep blue-black. */
+:root[data-theme="modus-vivendi-tinted"] {
+  --background: #0d0e1c;
+  --foreground: #ffffff;
+  --surface: rgba(29, 34, 53, 0.94);
+  --surface-strong: #2b3045;
+  --muted: #989898;
+  --line: #4a4f69;
+  --grid-line: rgba(255, 255, 255, 0.04);
+  --wash-left: rgba(18, 21, 74, 0.6);
+  --wash-right: rgba(4, 40, 55, 0.6);
+  --wash-bottom: transparent;
+  --background-start: #0d0e1c;
+  --background-end: #0d0e1c;
+  --accent: #79a8ff;
+  --accent-strong: #82b0ec;
+  --accent-soft: rgba(121, 168, 255, 0.14);
+  --accent-glow: rgba(121, 168, 255, 0.45);
+  --on-accent: #0d0e1c;
+  --danger: #ff5f59;
+  --success: #44bc44;
+  --success-soft: #092f1f;
+  --success-line: #00422a;
+  --selection: #555a66;
+  --shadow: 0 18px 60px rgba(0, 0, 0, 0.5);
+  --card-sheen: transparent;
+  --card-edge: rgba(255, 255, 255, 0.05);
+  --masthead-sheen: transparent;
+  --masthead-glow: rgba(121, 168, 255, 0.08);
+  --masthead-start: rgba(29, 34, 53, 0.94);
+  --masthead-end: rgba(29, 34, 53, 0.86);
+  --masthead-edge: rgba(255, 255, 255, 0.06);
+  --masthead-ring: rgba(255, 255, 255, 0.04);
   color-scheme: dark;
 }
 
@@ -53,6 +235,13 @@
   --color-accent: var(--accent);
   --color-accent-strong: var(--accent-strong);
   --color-accent-soft: var(--accent-soft);
+  --color-accent-fill: var(--accent-fill);
+  --color-accent-fill-strong: var(--accent-fill-strong);
+  --color-on-accent: var(--on-accent);
+  --color-danger: var(--danger);
+  --color-success: var(--success);
+  --color-success-soft: var(--success-soft);
+  --color-success-line: var(--success-line);
   --font-sans: var(--font-sans);
   --font-display: var(--font-display);
   --font-mono: var(--font-mono);
@@ -86,7 +275,7 @@ button {
 }
 
 ::selection {
-  background: rgba(15, 118, 110, 0.18);
+  background: var(--selection);
 }
 
 .display-title {
@@ -96,43 +285,23 @@ button {
 
 .card-surface {
   background:
-    linear-gradient(180deg, rgba(255, 255, 255, 0.5), rgba(255, 255, 255, 0) 58%),
+    linear-gradient(180deg, var(--card-sheen), transparent 58%),
     var(--surface);
   border: 1px solid var(--line);
   box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.6),
+    inset 0 1px 0 var(--card-edge),
     var(--shadow);
   backdrop-filter: blur(20px);
 }
 
-:root[data-theme="dark"] .card-surface {
-  background:
-    linear-gradient(180deg, rgba(255, 255, 255, 0.05), rgba(255, 255, 255, 0) 58%),
-    var(--surface);
-  box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.06),
-    var(--shadow);
-}
-
 .masthead-shell {
   background:
-    linear-gradient(180deg, rgba(255, 255, 255, 0.2), transparent 22%),
-    radial-gradient(circle at top right, rgba(15, 118, 110, 0.08), transparent 34%),
-    linear-gradient(180deg, rgba(255, 252, 246, 0.74) 0%, rgba(255, 250, 243, 0.58) 100%);
+    linear-gradient(180deg, var(--masthead-sheen), transparent 22%),
+    radial-gradient(circle at top right, var(--masthead-glow), transparent 34%),
+    linear-gradient(180deg, var(--masthead-start) 0%, var(--masthead-end) 100%);
   box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.6),
-    inset 0 0 0 1px rgba(24, 49, 61, 0.04),
-    var(--shadow);
-}
-
-:root[data-theme="dark"] .masthead-shell {
-  background:
-    linear-gradient(180deg, rgba(255, 255, 255, 0.04), transparent 22%),
-    radial-gradient(circle at top right, rgba(52, 184, 170, 0.12), transparent 34%),
-    linear-gradient(180deg, rgba(24, 36, 43, 0.9) 0%, rgba(19, 29, 35, 0.82) 100%);
-  box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.08),
-    inset 0 0 0 1px rgba(229, 237, 240, 0.04),
+    inset 0 1px 0 var(--masthead-edge),
+    inset 0 0 0 1px var(--masthead-ring),
     var(--shadow);
 }
 

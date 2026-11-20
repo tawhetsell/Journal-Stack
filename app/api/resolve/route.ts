@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 
 import { db } from "@/lib/db";
 import { resolveAccess } from "@/lib/resolver";
+import { getInstitutionSetting } from "@/lib/settings";
 import { resolveRequestSchema } from "@/lib/validation";
 
 export const runtime = "nodejs";
@@ -17,6 +18,9 @@ export async function POST(request: Request) {
     );
   }
 
+  const setting = await getInstitutionSetting();
+  const institution = setting.status === "set" ? setting.institution : null;
+
   if (parsed.data.articleId) {
     const article = await db.article.findUnique({
       where: { id: parsed.data.articleId },
@@ -27,7 +31,7 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Article not found." }, { status: 404 });
     }
 
-    const access = resolveAccess(article);
+    const access = resolveAccess(article, institution);
 
     await db.accessAttempt.create({
       data: {
@@ -47,9 +51,7 @@ export async function POST(request: Request) {
     publicationDate: null,
     openAccessUrl: null,
     directPdfUrl: null,
-    publisherLandingUrl: parsed.data.doi
-      ? `https://doi.org/${parsed.data.doi}`
-      : null,
+    publisherLandingUrl: null,
     journal: parsed.data.journalTitle
       ? {
           title: parsed.data.journalTitle,
@@ -57,7 +59,7 @@ export async function POST(request: Request) {
           issnPrint: null,
         }
       : null,
-  });
+  }, institution);
 
   return NextResponse.json(access);
 }

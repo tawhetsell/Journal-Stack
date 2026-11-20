@@ -43,13 +43,34 @@ async function upsertArticle(journalId: string, article: NormalizedArticleInput)
     return "created";
   }
 
+  // Enrichment is best-effort: a failed OpenAlex call or a thinner feed item
+  // must not blank out metadata an earlier refresh already captured.
   await db.article.update({
     where: { id: existing.id },
-    data,
+    data: {
+      ...data,
+      abstract: data.abstract ?? existing.abstract,
+      publicationDate: data.publicationDate ?? existing.publicationDate,
+      authorsJson:
+        article.authors.length > 0 ? data.authorsJson : existing.authorsJson,
+      publisherLandingUrl:
+        data.publisherLandingUrl ?? safeHttpUrl(existing.publisherLandingUrl),
+      openAccessUrl: data.openAccessUrl ?? safeHttpUrl(existing.openAccessUrl),
+      directPdfUrl: data.directPdfUrl ?? safeHttpUrl(existing.directPdfUrl),
+    },
   });
 
   return "updated";
 }
+
+export type JournalRefreshResult = {
+  journalId: string;
+  title: string;
+  created: number;
+  updated: number;
+  total: number;
+  error?: string;
+};
 
 export async function refreshJournal(journalId: string) {
   const journal = await db.journal.findUnique({
@@ -98,14 +119,18 @@ export async function refreshFollowedJournals(journalId?: string) {
     orderBy: { title: "asc" },
   });
 
-  const results = [];
+  const results: JournalRefreshResult[] = [];
 
   for (const journal of journals) {
     try {
-      results.push(await refreshJournal(journal.id));
+      results.push({
+        title: journal.title,
+        ...(await refreshJournal(journal.id)),
+      });
     } catch (error) {
       results.push({
         journalId: journal.id,
+        title: journal.title,
         created: 0,
         updated: 0,
         total: 0,

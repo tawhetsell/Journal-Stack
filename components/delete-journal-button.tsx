@@ -25,7 +25,7 @@ export function DeleteJournalButton({
       <input type="hidden" name="journalId" value={journalId} />
       <button
         type="submit"
-        className="rounded-full border border-line px-4 py-2 text-sm font-semibold text-red-500 hover:-translate-y-0.5 hover:border-red-400/50"
+        className="rounded-full border border-line px-4 py-2 text-sm font-semibold text-danger hover:-translate-y-0.5 hover:border-danger/50"
       >
         Delete
       </button>

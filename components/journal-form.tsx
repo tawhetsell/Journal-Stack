@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useTransition } from "react";
+import { useRouter } from "next/navigation";
 
 import { createJournalAction, updateJournalAction } from "@/app/actions";
 
@@ -21,8 +22,11 @@ const inputClass =
 const labelClass =
   "text-xs font-semibold uppercase tracking-[0.18em] text-muted";
 
+// State is seeded from props once, so the parent must give this a `key` that
+// changes with the journal being edited.
 export function JournalForm({ journal }: { journal?: JournalFormValues }) {
   const isEdit = Boolean(journal?.id);
+  const router = useRouter();
 
   const [sourceType, setSourceType] = useState(journal?.sourceType ?? "rss");
   const [title, setTitle] = useState(journal?.title ?? "");
@@ -33,7 +37,10 @@ export function JournalForm({ journal }: { journal?: JournalFormValues }) {
   const [issnPrint, setIssnPrint] = useState(journal?.issnPrint ?? "");
   const [publisher, setPublisher] = useState(journal?.publisher ?? "");
   const [homepageUrl, setHomepageUrl] = useState(journal?.homepageUrl ?? "");
+  const [follow, setFollow] = useState(journal?.followed ?? !isEdit);
   const [showMore, setShowMore] = useState(false);
+  const [submitError, setSubmitError] = useState<string | null>(null);
+  const [isSaving, startSaving] = useTransition();
 
   const [lookupStatus, setLookupStatus] = useState<
     "idle" | "loading" | "error" | "done"
@@ -78,9 +85,46 @@ export function JournalForm({ journal }: { journal?: JournalFormValues }) {
     }
   }
 
+  function handleSave(formData: FormData) {
+    setSubmitError(null);
+
+    startSaving(async () => {
+      const result = isEdit
+        ? await updateJournalAction(formData)
+        : await createJournalAction(formData);
+
+      if (!result.ok) {
+        setSubmitError(result.error);
+        return;
+      }
+
+      if (isEdit) {
+        // Leaving edit mode changes the form's key, which remounts it blank.
+        router.push("/journals");
+        return;
+      }
+
+      setTitle("");
+      setSourceUrl("");
+      setIssnElectronic("");
+      setIssnPrint("");
+      setPublisher("");
+      setHomepageUrl("");
+      setFollow(true);
+      setShowMore(false);
+      setLookupStatus("idle");
+      setLookupMessage("");
+    });
+  }
+
   return (
     <form
-      action={isEdit ? updateJournalAction : createJournalAction}
+      onSubmit={(event) => {
+        // Submitted by hand rather than through `action` so that a rejected
+        // save leaves every field exactly as the user typed it.
+        event.preventDefault();
+        handleSave(new FormData(event.currentTarget));
+      }}
       className="grid w-full gap-4"
     >
       {isEdit ? (
@@ -152,7 +196,7 @@ export function JournalForm({ journal }: { journal?: JournalFormValues }) {
         </button>
         {lookupMessage ? (
           <span
-            className={`text-sm ${lookupStatus === "error" ? "text-red-500" : "text-muted"}`}
+            className={`text-sm ${lookupStatus === "error" ? "text-danger" : "text-muted"}`}
           >
             {lookupMessage}
           </span>
@@ -220,17 +264,25 @@ export function JournalForm({ journal }: { journal?: JournalFormValues }) {
         <input
           type="checkbox"
           name="followNow"
-          defaultChecked={journal?.followed ?? !isEdit}
+          checked={follow}
+          onChange={(e) => setFollow(e.target.checked)}
           className="accent-[var(--accent)]"
         />
         Follow this journal (show its articles in the feed)
       </label>
 
+      {submitError ? (
+        <p role="alert" className="text-sm text-danger">
+          {submitError}
+        </p>
+      ) : null}
+
       <button
         type="submit"
-        className="rounded-full bg-accent px-5 py-3 text-sm font-semibold text-white hover:-translate-y-0.5 hover:bg-accent-strong"
+        disabled={isSaving}
+        className="rounded-full bg-accent-fill px-5 py-3 text-sm font-semibold text-on-accent hover:-translate-y-0.5 hover:bg-accent-fill-strong disabled:cursor-wait disabled:opacity-60"
       >
-        {isEdit ? "Save changes" : "Add journal"}
+        {isSaving ? "Saving…" : isEdit ? "Save changes" : "Add journal"}
       </button>
     </form>
   );

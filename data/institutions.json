@@ -1,0 +1,110 @@
+[
+  {
+    "name": "Arizona State University",
+    "resolverUrl": "https://search.lib.asu.edu/openurl/01ASU"
+  },
+  {
+    "name": "Boston University",
+    "resolverUrl": "https://bu.primo.exlibrisgroup.com/openurl/01BOSU_INST/01BOSU_INST:BU"
+  },
+  {
+    "name": "Brown University",
+    "resolverUrl": "https://brown.alma.exlibrisgroup.com/openurl/01BU_INST/01BU_INST:BROWN"
+  },
+  {
+    "name": "Carnegie Mellon University",
+    "resolverUrl": "https://cmu.primo.exlibrisgroup.com/openurl/01CMU_INST/01CMU_INST:01CMU"
+  },
+  {
+    "name": "Cornell University",
+    "resolverUrl": "https://resolver.library.cornell.edu/net/openurl/"
+  },
+  {
+    "name": "Dartmouth College",
+    "resolverUrl": "https://search.library.dartmouth.edu/openurl/01DCL_INST/01DCL_INST:01DCL"
+  },
+  {
+    "name": "Florida State University",
+    "resolverUrl": "https://fsu-flvc.primo.exlibrisgroup.com/openurl/01FALSC_FSU/01FALSC_FSU:Home"
+  },
+  {
+    "name": "Georgia Institute of Technology (Georgia Tech)",
+    "resolverUrl": "https://galileo-gatech.primo.exlibrisgroup.com/discovery/openurl?institution=01GALI_GIT&vid=01GALI_GIT:GT"
+  },
+  {
+    "name": "Georgia State University",
+    "resolverUrl": "https://galileo-gsu.primo.exlibrisgroup.com/openurl/01GALI_GSU/01GALI_GSU:GSU_V1"
+  },
+  {
+    "name": "Harvard University",
+    "resolverUrl": "https://libkey.io/libraries/215/openurl"
+  },
+  {
+    "name": "Johns Hopkins University",
+    "resolverUrl": "https://catalyst.library.jhu.edu/openurl/01JHU_INST/01JHU_INST:JHU"
+  },
+  {
+    "name": "Massachusetts Institute of Technology (MIT)",
+    "resolverUrl": "https://mit.primo.exlibrisgroup.com/openurl/01MIT_INST/01MIT_INST:MIT"
+  },
+  {
+    "name": "Michigan State University",
+    "resolverUrl": "https://ezproxy.msu.edu/login?url=https://resolver.ebscohost.com/openurl?"
+  },
+  {
+    "name": "Penn State University",
+    "resolverUrl": "https://libkey.io/libraries/138/openurl"
+  },
+  {
+    "name": "Princeton University",
+    "resolverUrl": "https://princeton.alma.exlibrisgroup.com/discovery/openurl?institution=01PRI_INST&vid=01PRI_INST:Services"
+  },
+  {
+    "name": "Purdue University",
+    "resolverUrl": "https://purdue.primo.exlibrisgroup.com/openurl/01PURDUE_PUWL/01PURDUE_PUWL:PURDUE"
+  },
+  {
+    "name": "Rutgers University",
+    "resolverUrl": "https://rutgers.primo.exlibrisgroup.com/discovery/openurl?institution=01RUT_INST&vid=01RUT_INST:01RUT"
+  },
+  {
+    "name": "University of California, Berkeley",
+    "resolverUrl": "https://search.library.berkeley.edu/openurl/01UCS_BER/01UCS_BER:UCB"
+  },
+  {
+    "name": "University of California, Los Angeles",
+    "resolverUrl": "https://search.library.ucla.edu/openurl/01UCS_LAL/01UCS_LAL:UCLA"
+  },
+  {
+    "name": "University of Illinois at Urbana-Champaign",
+    "resolverUrl": "https://i-share-UIU.primo.exlibrisgroup.com/openurl/01CARLI_UIU/01CARLI_UIU:CARLI_UIU"
+  },
+  {
+    "name": "University of North Carolina at Chapel Hill",
+    "resolverUrl": "https://vb3lk7eb4t.search.serialssolutions.com/"
+  },
+  {
+    "name": "University of Pennsylvania",
+    "resolverUrl": "https://elinks.library.upenn.edu/"
+  },
+  {
+    "name": "University of Southern California",
+    "resolverUrl": "https://libkey.io/libraries/149/openurl"
+  },
+  {
+    "name": "University of Texas at Austin",
+    "resolverUrl": "https://search.lib.utexas.edu/openurl/01UTAU_INST/01UTAU_INST:SEARCH"
+  },
+  {
+    "name": "University of Washington",
+    "resolverUrl": "https://orbiscascade-washington.primo.exlibrisgroup.com/openurl/01ALLIANCE_UW/01ALLIANCE_UW:UW"
+  },
+  {
+    "name": "Vanderbilt University",
+    "resolverUrl": "https://catalog.library.vanderbilt.edu/openurl/01VAN_INST/01VAN_INST:vanui"
+  },
+  {
+    "name": "Yale University",
+    "resolverUrl": "https://articles.library.yale.edu/openurl/01YALE_INST/01YALE_INST:01YALE_INST"
+  }
+]

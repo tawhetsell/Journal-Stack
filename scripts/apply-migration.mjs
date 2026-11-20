@@ -5,11 +5,26 @@ import { DatabaseSync } from "node:sqlite";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
+// Without a CLI path, use the same DATABASE_URL the app and seed script read
+// (from the environment or .env), so all three always target one file.
+// process.loadEnvFile is built in, which keeps this script dependency-free for
+// the desktop bundle.
+function databasePathFromEnv() {
+  try {
+    process.loadEnvFile();
+  } catch {
+    // No .env file: rely on the real environment or the default below.
+  }
+
+  const url = process.env.DATABASE_URL?.trim();
+  return url ? path.resolve(url.replace(/^file:/, "")) : null;
+}
+
 // Accept optional CLI args: apply-migration.mjs [dbPath] [migrationsDir]
-// Falls back to repo-local paths so `npm run db:migrate` still works unchanged.
+// The desktop shell always passes both.
 const dbPath = process.argv[2]
   ? path.resolve(process.argv[2])
-  : path.join(__dirname, "..", "prisma", "dev.db");
+  : (databasePathFromEnv() ?? path.join(__dirname, "..", "prisma", "dev.db"));
 
 const migrationsDir = process.argv[3]
   ? path.resolve(process.argv[3])

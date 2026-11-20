@@ -3,8 +3,12 @@ import Link from "next/link";
 import { AppShell } from "@/components/app-shell";
 import { ArticleCard } from "@/components/article-card";
 import { LocalStats } from "@/components/local-stats";
-import { refreshAllAction } from "@/app/actions";
-import { getFeedArticles, type FeedSort } from "@/lib/articles";
+import { RefreshButton } from "@/components/refresh-button";
+import {
+  getFeedArticles,
+  getFeedJournalGroups,
+  type FeedSort,
+} from "@/lib/articles";
 import { site } from "@/lib/site";
 
 export const dynamic = "force-dynamic";
@@ -35,45 +39,19 @@ function buildFeedHref(view: "journals" | "articles", sort: FeedSort) {
   return query ? `/feed?${query}` : "/feed";
 }
 
-function groupArticlesByJournal(
-  articles: Awaited<ReturnType<typeof getFeedArticles>>,
-) {
-  const groups = new Map<
-    string,
-    {
-      journalTitle: string;
-      articles: typeof articles;
-    }
-  >();
-
-  for (const article of articles) {
-    const existing = groups.get(article.journalId);
-
-    if (existing) {
-      existing.articles.push(article);
-      continue;
-    }
-
-    groups.set(article.journalId, {
-      journalTitle: article.journal.title,
-      articles: [article],
-    });
-  }
-
-  return Array.from(groups.entries()).map(([journalId, group]) => ({
-    journalId,
-    ...group,
-  }));
-}
-
 export default async function FeedPage({ searchParams }: FeedPageProps) {
   const query = await searchParams;
   const viewParam = getSingleQueryValue(query.view);
   const sortParam = getSingleQueryValue(query.sort);
   const groupedView = viewParam !== "articles";
   const sortBy: FeedSort = sortParam === "viewed" ? "viewed" : "recent";
-  const articles = await getFeedArticles(sortBy);
-  const journalGroups = groupArticlesByJournal(articles);
+  // Each view has its own query: Journal View takes the top articles per
+  // journal, Article View the top articles overall.
+  const journalGroups = groupedView ? await getFeedJournalGroups(sortBy) : [];
+  const articles = groupedView ? [] : await getFeedArticles(sortBy);
+  const hasArticles = groupedView
+    ? journalGroups.length > 0
+    : articles.length > 0;
 
   return (
     <AppShell
@@ -100,17 +78,13 @@ export default async function FeedPage({ searchParams }: FeedPageProps) {
             >
               {sortBy === "recent" ? "Most Viewed" : "Most Recent"}
             </Link>
-            <form action={refreshAllAction}>
-              <button
-                type="submit"
-                className="rounded-full bg-accent px-5 py-3 text-sm font-semibold text-white hover:-translate-y-0.5 hover:bg-accent-strong"
-              >
-                Refresh followed journals
-              </button>
-            </form>
+            <RefreshButton
+              label="Refresh followed journals"
+              className="rounded-full bg-accent-fill px-5 py-3 text-sm font-semibold text-on-accent hover:-translate-y-0.5 hover:bg-accent-fill-strong"
+            />
           </div>
         </section>
-        {articles.length > 0 ? (
+        {hasArticles ? (
           groupedView ? (
             journalGroups.map((group) => (
               <details
@@ -128,8 +102,9 @@ export default async function FeedPage({ searchParams }: FeedPageProps) {
                       </h2>
                     </div>
                     <div className="rounded-full border border-line bg-surface-strong/70 px-4 py-2 text-sm font-semibold text-foreground">
-                      {group.articles.length} article
-                      {group.articles.length === 1 ? "" : "s"}
+                      {group.articles.length < group.totalArticles
+                        ? `${sortBy === "viewed" ? "Top" : "Latest"} ${group.articles.length} of ${group.totalArticles}`
+                        : `${group.totalArticles} article${group.totalArticles === 1 ? "" : "s"}`}
                     </div>
                   </div>
                 </summary>

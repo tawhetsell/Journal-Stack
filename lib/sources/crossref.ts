@@ -1,5 +1,6 @@
 import type { NormalizedArticleInput, SourceJournal } from "@/lib/types";
 import {
+  FETCH_TIMEOUT_MS,
   buildSourceId,
   normalizeDoi,
   parseDate,
@@ -39,31 +40,60 @@ function buildDate(work: CrossrefWork) {
   }
 
   const [year, month = 1, day = 1] = parts;
-  return parseDate(new Date(year, month - 1, day));
+  // Crossref gives a calendar date, not an instant. Noon UTC keeps it on the
+  // same day in every timezone, both when displayed locally and when the
+  // resolver link takes the UTC date.
+  return parseDate(new Date(Date.UTC(year, month - 1, day, 12)));
 }
 
-export async function fetchArticlesFromCrossref(
-  journal: SourceJournal,
-): Promise<NormalizedArticleInput[]> {
-  const issn = journal.issnElectronic ?? journal.issnPrint;
+// JATS abstracts open with a literal "Abstract" heading element.
+const ABSTRACT_HEADING = /<(?:jats:)?title>\s*abstract\s*<\/(?:jats:)?title>/i;
 
-  if (!issn) {
-    return [];
-  }
+// Publishers deposit issue furniture as ordinary journal articles.
+const NON_ARTICLE_TITLE =
+  /^(?:issue information|front matter|back matter|front cover|back cover|cover image|cover picture|editorial board|masthead|table of contents|contents)$/i;
 
-  const response = await fetch(
-    `https://api.crossref.org/journals/${issn}/works?sort=published&order=desc&rows=15`,
+function fetchWorks(issn: string) {
+  return fetch(
+    `https://api.crossref.org/journals/${issn}/works?filter=type:journal-article&sort=published&order=desc&rows=15`,
     {
       headers: {
         Accept: "application/json",
         "User-Agent": "literature-access-app/0.1 (mailto:local-first@example.com)",
       },
       cache: "no-store",
+      signal: AbortSignal.timeout(FETCH_TIMEOUT_MS),
     },
   );
+}
+
+export async function fetchArticlesFromCrossref(
+  journal: SourceJournal,
+): Promise<NormalizedArticleInput[]> {
+  const issns = [journal.issnElectronic, journal.issnPrint].filter(
+    (value): value is string => Boolean(value),
+  );
+
+  if (issns.length === 0) {
+    return [];
+  }
+
+  // Crossref files some journals under only one of their ISSNs (Elsevier
+  // titles are known by the print ISSN alone) and answers 404 for the other.
+  let issn = issns[0];
+  let response = await fetchWorks(issn);
+
+  for (const fallback of issns.slice(1)) {
+    if (response.status !== 404) {
+      break;
+    }
+
+    issn = fallback;
+    response = await fetchWorks(issn);
+  }
 
   if (!response.ok) {
-    throw new Error(`Crossref fetch failed for ${journal.title}`);
+    throw new Error(`Crossref returned HTTP ${response.status}`);
   }
 
   const payload = (await response.json()) as {
@@ -72,8 +102,12 @@ export async function fetchArticlesFromCrossref(
     };
   };
 
+  const works = (payload.message?.items ?? []).filter(
+    (work) => !NON_ARTICLE_TITLE.test(work.title?.[0]?.trim() ?? ""),
+  );
+
   return Promise.all(
-    (payload.message?.items ?? []).map(async (work) => {
+    works.map(async (work) => {
       const doi = normalizeDoi(work.DOI ?? null);
       const enrichment = await enrichWithOpenAlex(doi).catch(() => null);
       const directPdfUrl =
@@ -86,8 +120,9 @@ export async function fetchArticlesFromCrossref(
       return {
         sourceId: buildSourceId([journal.id, doi, work.URL, work.title?.[0]]),
         doi: enrichment?.doi ?? doi,
-        title: work.title?.[0] ?? "Untitled article",
-        abstract: stripHtml(work.abstract),
+        // sourceId above keeps the raw title so existing rows still match.
+        title: stripHtml(work.title?.[0]) ?? "Untitled article",
+        abstract: stripHtml(work.abstract?.replace(ABSTRACT_HEADING, "")),
         publicationDate: buildDate(work),
         authors:
           work.author?.map((author) => {
