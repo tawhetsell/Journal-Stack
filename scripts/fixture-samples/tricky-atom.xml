@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Atom entries written to exercise the awkward corners. Made up for the fixtures. -->
+<feed xmlns="http://www.w3.org/2005/Atom" xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:prism="http://prismstandard.org/namespaces/basic/2.0/">
+  <title type="text">Tricky Atom</title>
+  <id>urn:tricky:atom</id>
+  <updated>2024-03-07T00:00:00Z</updated>
+  <entry>
+    <title>The alternate link is not the first one</title>
+    <link rel="self" href="https://tricky.example.net/api/entries/1"/>
+    <link rel="alternate" type="text/html" href="https://tricky.example.net/entries/1"/>
+    <link rel="related" href="https://doi.org/10.5555/atom.related"/>
+    <id>urn:uuid:00000000-0000-0000-0000-000000000001</id>
+    <published>2024-03-07T08:00:00.123456+05:30</published>
+    <updated>2024-03-09T00:00:00Z</updated>
+    <author><name>  Spaced Name  </name></author>
+    <author><uri>https://tricky.example.net/people/no-name</uri></author>
+    <content type="xhtml"><div xmlns="http://www.w3.org/1999/xhtml"><p>XHTML <b>content</b> &amp; an entity.</p><p>Second.</p></div></content>
+    <summary type="text">A summary that loses to the content.</summary>
+  </entry>
+  <entry>
+    <title type="html">&lt;b&gt;Bold&lt;/b&gt; title &amp;amp; entity</title>
+    <link href="https://tricky.example.net/entries/2"/>
+    <id>https://tricky.example.net/entries/2</id>
+    <updated>2024-03-05T12:00:00Z</updated>
+    <dc:creator>Creator One</dc:creator>
+    <dc:creator>Creator Two</dc:creator>
+    <author><name>Not Used</name></author>
+    <prism:doi>10.5555/atom.2</prism:doi>
+    <summary type="html">&lt;p&gt;Summary only, with caf&amp;eacute;.&lt;/p&gt;</summary>
+  </entry>
+  <entry>
+    <title></title>
+    <id>urn:tricky:atom:3</id>
+    <updated></updated>
+    <content type="html"></content>
+  </entry>
+</feed>

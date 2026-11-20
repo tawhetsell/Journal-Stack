@@ -9,14 +9,17 @@ import {
   safeHttpUrl,
   stripHtml,
 } from "@/lib/utils";
-import { enrichWithOpenAlex } from "@/lib/sources/openalex";
+import {
+  enrichWithOpenAlex,
+  type OpenAlexEnrichment,
+} from "@/lib/sources/openalex";
 
 // rss-parser only copies a fixed list of item fields and keeps just the first
 // <dc:creator>. These custom fields expose every author element plus the DOI
 // fields publishers commonly use. The explicit type arguments stop rss-parser
 // from inferring an item shape out of the field names; items are read as
 // untyped records below.
-type FeedRecord = Record<string, unknown>;
+export type FeedRecord = Record<string, unknown>;
 
 const parser = new Parser<FeedRecord, FeedRecord>({
   customFields: {
@@ -109,7 +112,7 @@ function trimUrlDoi(doi: string) {
     .replace(/[.,;:]+$/, "");
 }
 
-function extractDoi(item: Record<string, unknown>) {
+export function extractDoi(item: Record<string, unknown>) {
   // Explicit DOI fields are exact, so prefer them over anything URL-derived.
   for (const candidate of [item.prismDoi, item.dcIdentifier]) {
     const doi = findDoi(candidate);
@@ -145,6 +148,57 @@ function sourceKeyDoi(item: Record<string, unknown>) {
   return null;
 }
 
+// The two steps below need no network, and are kept apart from the request so
+// they can be run over saved feeds (scripts/export-fixtures.ts).
+
+// The items of a feed that the app reads: the first 18.
+export async function parseFeedItems(xml: string): Promise<FeedRecord[]> {
+  const feed = await parser.parseString(xml);
+  return feed.items.slice(0, 18);
+}
+
+// One article from one feed item, with whatever OpenAlex added.
+export function articleFromFeedItem(
+  journal: Pick<SourceJournal, "id" | "sourceUrl">,
+  item: FeedRecord,
+  enrichment: OpenAlexEnrichment | null,
+): NormalizedArticleInput {
+  const doi = extractDoi(item);
+  const publisherLandingUrl =
+    safeHttpUrl(getFirstString(item.link)) ??
+    enrichment?.publisherLandingUrl ??
+    (doi ? `https://doi.org/${doi}` : null);
+
+  return {
+    sourceId: buildSourceId([
+      journal.id,
+      sourceKeyDoi(item),
+      getFirstString(item.guid),
+      getFirstString(item.link),
+      getFirstString(item.title),
+    ]),
+    doi: enrichment?.doi ?? doi,
+    title: stripHtml(getFirstString(item.title)) ?? "Untitled article",
+    abstract:
+      stripHtml(getFirstString(item.contentSnippet)) ??
+      stripHtml(getFirstString(item.content)) ??
+      stripHtml(getFirstString(item.summary)) ??
+      enrichment?.abstract ??
+      null,
+    publicationDate:
+      parseDate(getFirstString(item.isoDate)) ??
+      parseDate(getFirstString(item.pubDate)),
+    authors: extractAuthors(item),
+    publisherLandingUrl,
+    openAccessUrl: enrichment?.openAccessUrl ?? null,
+    directPdfUrl: enrichment?.directPdfUrl ?? null,
+    sourcePayload: JSON.stringify({
+      sourceType: "rss",
+      sourceUrl: journal.sourceUrl,
+    }),
+  };
+}
+
 export async function fetchArticlesFromRss(
   journal: SourceJournal,
 ): Promise<NormalizedArticleInput[]> {
@@ -165,48 +219,15 @@ export async function fetchArticlesFromRss(
     throw new Error(`RSS feed returned HTTP ${response.status}`);
   }
 
-  const xml = await response.text();
-  const feed = await parser.parseString(xml);
-  const items = feed.items.slice(0, 18);
+  const items = await parseFeedItems(await response.text());
 
   return Promise.all(
     items.map(async (item) => {
-      const typedItem: FeedRecord = item;
-      const doi = extractDoi(typedItem);
-      const enrichment = await enrichWithOpenAlex(doi).catch(() => null);
-      const publisherLandingUrl =
-        safeHttpUrl(getFirstString(typedItem.link)) ??
-        enrichment?.publisherLandingUrl ??
-        (doi ? `https://doi.org/${doi}` : null);
+      const enrichment = await enrichWithOpenAlex(extractDoi(item)).catch(
+        () => null,
+      );
 
-      return {
-        sourceId: buildSourceId([
-          journal.id,
-          sourceKeyDoi(typedItem),
-          getFirstString(typedItem.guid),
-          getFirstString(typedItem.link),
-          getFirstString(typedItem.title),
-        ]),
-        doi: enrichment?.doi ?? doi,
-        title: stripHtml(getFirstString(typedItem.title)) ?? "Untitled article",
-        abstract:
-          stripHtml(getFirstString(typedItem.contentSnippet)) ??
-          stripHtml(getFirstString(typedItem.content)) ??
-          stripHtml(getFirstString(typedItem.summary)) ??
-          enrichment?.abstract ??
-          null,
-        publicationDate:
-          parseDate(getFirstString(typedItem.isoDate)) ??
-          parseDate(getFirstString(typedItem.pubDate)),
-        authors: extractAuthors(typedItem),
-        publisherLandingUrl,
-        openAccessUrl: enrichment?.openAccessUrl ?? null,
-        directPdfUrl: enrichment?.directPdfUrl ?? null,
-        sourcePayload: JSON.stringify({
-          sourceType: "rss",
-          sourceUrl: journal.sourceUrl,
-        }),
-      };
+      return articleFromFeedItem(journal, item, enrichment);
     }),
   );
 }

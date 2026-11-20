@@ -13,6 +13,7 @@
     "db:generate": "prisma generate",
     "db:migrate": "node scripts/apply-migration.mjs",
     "db:seed": "node prisma/seed.mjs",
+    "fixtures": "node scripts/export-fixtures.mjs",
     "postinstall": "prisma generate"
   },
   "prisma": {

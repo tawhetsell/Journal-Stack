@@ -7,9 +7,12 @@ import {
   safeHttpUrl,
   stripHtml,
 } from "@/lib/utils";
-import { enrichWithOpenAlex } from "@/lib/sources/openalex";
+import {
+  enrichWithOpenAlex,
+  type OpenAlexEnrichment,
+} from "@/lib/sources/openalex";
 
-type CrossrefWork = {
+export type CrossrefWork = {
   DOI?: string;
   title?: string[];
   abstract?: string;
@@ -52,6 +55,73 @@ const ABSTRACT_HEADING = /<(?:jats:)?title>\s*abstract\s*<\/(?:jats:)?title>/i;
 // Publishers deposit issue furniture as ordinary journal articles.
 const NON_ARTICLE_TITLE =
   /^(?:issue information|front matter|back matter|front cover|back cover|cover image|cover picture|editorial board|masthead|table of contents|contents)$/i;
+
+type CrossrefPayload = {
+  message?: {
+    items?: CrossrefWork[];
+  };
+};
+
+// The two steps below need no network, and are kept apart from the request so
+// they can be run over saved responses (scripts/export-fixtures.ts).
+
+// The works in a response, without the issue furniture.
+export function crossrefWorksFrom(payload: CrossrefPayload) {
+  return (payload.message?.items ?? []).filter(
+    (work) => !NON_ARTICLE_TITLE.test(work.title?.[0]?.trim() ?? ""),
+  );
+}
+
+// One article from one work, with whatever OpenAlex added. `issn` is the one
+// the response was fetched under.
+export function articleFromCrossrefWork(
+  journalId: string,
+  issn: string,
+  work: CrossrefWork,
+  enrichment: OpenAlexEnrichment | null,
+): NormalizedArticleInput {
+  const doi = normalizeDoi(work.DOI ?? null);
+  const directPdfUrl =
+    safeHttpUrl(
+      work.link?.find((link) => link["content-type"]?.includes("pdf"))?.URL,
+    ) ??
+    enrichment?.directPdfUrl ??
+    null;
+
+  return {
+    sourceId: buildSourceId([journalId, doi, work.URL, work.title?.[0]]),
+    doi: enrichment?.doi ?? doi,
+    // sourceId above keeps the raw title so existing rows still match.
+    title: stripHtml(work.title?.[0]) ?? "Untitled article",
+    // Several publishers (Elsevier among them) deposit no abstract with
+    // Crossref, so OpenAlex fills the gap when it has one.
+    abstract:
+      stripHtml(work.abstract?.replace(ABSTRACT_HEADING, "")) ??
+      enrichment?.abstract ??
+      null,
+    publicationDate: buildDate(work),
+    authors:
+      work.author
+        ?.map((author) => {
+          const fullName = [author.given, author.family]
+            .filter(Boolean)
+            .join(" ")
+            .trim();
+          return fullName || author.name || "";
+        })
+        .filter(Boolean) ?? [],
+    publisherLandingUrl:
+      enrichment?.publisherLandingUrl ??
+      safeHttpUrl(work.URL) ??
+      (doi ? `https://doi.org/${doi}` : null),
+    openAccessUrl: enrichment?.openAccessUrl ?? null,
+    directPdfUrl,
+    sourcePayload: JSON.stringify({
+      sourceType: "crossref",
+      issn,
+    }),
+  };
+}
 
 function fetchWorks(issn: string) {
   return fetch(
@@ -96,58 +166,15 @@ export async function fetchArticlesFromCrossref(
     throw new Error(`Crossref returned HTTP ${response.status}`);
   }
 
-  const payload = (await response.json()) as {
-    message?: {
-      items?: CrossrefWork[];
-    };
-  };
-
-  const works = (payload.message?.items ?? []).filter(
-    (work) => !NON_ARTICLE_TITLE.test(work.title?.[0]?.trim() ?? ""),
-  );
+  const works = crossrefWorksFrom((await response.json()) as CrossrefPayload);
 
   return Promise.all(
     works.map(async (work) => {
-      const doi = normalizeDoi(work.DOI ?? null);
-      const enrichment = await enrichWithOpenAlex(doi).catch(() => null);
-      const directPdfUrl =
-        safeHttpUrl(
-          work.link?.find((link) => link["content-type"]?.includes("pdf"))?.URL,
-        ) ??
-        enrichment?.directPdfUrl ??
-        null;
+      const enrichment = await enrichWithOpenAlex(
+        normalizeDoi(work.DOI ?? null),
+      ).catch(() => null);
 
-      return {
-        sourceId: buildSourceId([journal.id, doi, work.URL, work.title?.[0]]),
-        doi: enrichment?.doi ?? doi,
-        // sourceId above keeps the raw title so existing rows still match.
-        title: stripHtml(work.title?.[0]) ?? "Untitled article",
-        // Several publishers (Elsevier among them) deposit no abstract with
-        // Crossref, so OpenAlex fills the gap when it has one.
-        abstract:
-          stripHtml(work.abstract?.replace(ABSTRACT_HEADING, "")) ??
-          enrichment?.abstract ??
-          null,
-        publicationDate: buildDate(work),
-        authors:
-          work.author?.map((author) => {
-            const fullName = [author.given, author.family]
-              .filter(Boolean)
-              .join(" ")
-              .trim();
-            return fullName || author.name || "";
-          }).filter(Boolean) ?? [],
-        publisherLandingUrl:
-          enrichment?.publisherLandingUrl ??
-          safeHttpUrl(work.URL) ??
-          (doi ? `https://doi.org/${doi}` : null),
-        openAccessUrl: enrichment?.openAccessUrl ?? null,
-        directPdfUrl,
-        sourcePayload: JSON.stringify({
-          sourceType: "crossref",
-          issn,
-        }),
-      };
+      return articleFromCrossrefWork(journal.id, issn, work, enrichment);
     }),
   );
 }

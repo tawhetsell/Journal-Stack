@@ -13,7 +13,12 @@ async function fetchFromSource(journal: SourceJournal) {
   return fetchArticlesFromRss(journal);
 }
 
-async function upsertArticle(journalId: string, article: NormalizedArticleInput) {
+// Exported so the insert-or-update rules can be run over sample articles
+// (scripts/export-fixtures.ts).
+export async function upsertArticle(
+  journalId: string,
+  article: NormalizedArticleInput,
+) {
   const normalizedDoi = normalizeDoi(article.doi);
   const existing = await db.article.findFirst({
     where: {

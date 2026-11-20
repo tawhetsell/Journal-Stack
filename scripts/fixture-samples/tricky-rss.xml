@@ -1,0 +1,79 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- RSS 2.0 items written to exercise the awkward corners. Made up for the fixtures. -->
+<rss version="2.0" xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:content="http://purl.org/rss/1.0/modules/content/" xmlns:prism="http://prismstandard.org/namespaces/basic/2.0/">
+  <channel>
+    <title>Tricky Feed</title>
+    <link>https://tricky.example.org/</link>
+    <description>Corner cases</description>
+    <item>
+      <title>Entities of every kind in the description</title>
+      <link>https://tricky.example.org/a/1</link>
+      <guid>https://tricky.example.org/a/1</guid>
+      <description>Caf&amp;eacute; &amp;ndash; it&amp;rsquo;s na&amp;iuml;ve &amp;amp;lt;b&amp;amp;gt; &amp;notit; &amp;copy2024 &amp;NotReal; &amp;#233;&amp;#xE9; &amp;#x80; &amp;#0; &amp;#xD800; &amp;alpha;&amp;beta; &amp;frac12; &amp;nbsp;end &amp;amp</description>
+    </item>
+    <item>
+      <title>Markup written straight into the description</title>
+      <link>https://tricky.example.org/a/2</link>
+      <guid>https://tricky.example.org/a/2</guid>
+      <description><p class="lead">Para <i>one</i> &amp; more</p><p>Para two</p><br/></description>
+    </item>
+    <item>
+      <title><![CDATA[Block tags & line breaks in <em>CDATA</em>]]></title>
+      <link>
+        https://tricky.example.org/a/3
+      </link>
+      <guid isPermaLink="true"></guid>
+      <pubDate>
+        Wed, 06 Mar 2024 09:30:00 +0100
+      </pubDate>
+      <description><![CDATA[<h2>Background</h2>We studied things.<br>Then more.
+<ul><li>First</li><li>Second</li></ul><div>
+  <p>Nested paragraph with a <a href="https://tricky.example.org/x">link
+that wraps</a>.</p>
+</div>if 1 < 2 then > done]]></description>
+    </item>
+    <item>
+      <title type="text">A title that carries an attribute</title>
+      <link>https://tricky.example.org/a/4</link>
+      <guid isPermaLink="false">  tricky-4  </guid>
+      <pubDate></pubDate>
+      <dc:date>2024-03-04T06:00:00Z</dc:date>
+      <author>First Author</author>
+      <author>Second Author</author>
+      <description>   </description>
+      <summary>Used only when the description has nothing.</summary>
+    </item>
+    <item>
+      <dc:title>Only a dc:title</dc:title>
+      <link>https://tricky.example.org/a/5</link>
+      <pubDate>   </pubDate>
+      <dc:date>2024-03-03</dc:date>
+      <dc:creator xmlns:dc="http://purl.org/dc/elements/1.1/">Declared Inline</dc:creator>
+      <author>Ignored Because Creator Exists</author>
+      <prism:doi>  https://doi.org/10.5555/TRICKY.5  </prism:doi>
+      <content:encoded><![CDATA[<p>Only content:encoded, which the app does not read.</p>]]></content:encoded>
+    </item>
+    <item>
+      <title>A long author list in one element, and a DOI with a trailing path</title>
+      <link>https://tricky.example.org/doi/10.5555/tricky.6/abstract</link>
+      <guid isPermaLink="false">urn:tricky:6</guid>
+      <pubDate>2024-03-02 14:00:00</pubDate>
+      <dc:creator>A. One, B. Two, C. Three &amp; D. Four and E. Five</dc:creator>
+      <description>&lt;p&gt;Escaped &lt;b&gt;markup&lt;/b&gt; with H&lt;sub&gt;2&lt;/sub&gt;O.&lt;/p&gt;</description>
+    </item>
+    <item>
+      <title>Section headings on their own lines between paragraphs</title>
+      <link>https://tricky.example.org/a/8</link>
+      <guid>https://tricky.example.org/a/8</guid>
+      <description>&lt;p&gt;by One Author, Another Author&lt;/p&gt;
+Background &lt;p&gt;First paragraph with &lt;i&gt;Genus species&lt;/i&gt; in it.&lt;/p&gt; Methods &lt;p&gt;Second paragraph.&lt;/p&gt;
+Results &lt;p&gt;Third paragraph.&lt;/p&gt;</description>
+    </item>
+    <item>
+      <title>Andrews writes alone</title>
+      <link>https://tricky.example.org/a/7</link>
+      <dc:creator>Sandy Andrews</dc:creator>
+      <dc:identifier>info:doi/10.5555/tricky.7;</dc:identifier>
+    </item>
+  </channel>
+</rss>

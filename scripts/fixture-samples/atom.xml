@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Atom in the style of an open-access publisher's feed. Made up for the fixtures. -->
+<feed xmlns="http://www.w3.org/2005/Atom">
+  <title>Sample ONE</title>
+  <link rel="alternate" href="https://journals.example.net/sampleone/"/>
+  <id>https://journals.example.net/sampleone/feed/atom</id>
+  <updated>2024-03-07T14:00:00Z</updated>
+  <entry>
+    <title type="html">Gut microbes &amp;amp; sleep in &lt;i&gt;Mus musculus&lt;/i&gt;</title>
+    <link rel="alternate" href="https://journals.example.net/sampleone/article?id=10.1371/journal.sone.0300001"/>
+    <id>https://doi.org/10.1371/journal.sone.0300001</id>
+    <published>2024-03-07T14:00:00Z</published>
+    <updated>2024-03-08T09:15:00Z</updated>
+    <author><name>Fatima Al-Sayed</name></author>
+    <author><name>Tomás Ó Briain</name></author>
+    <author><name>Nguyễn Thị Lan</name></author>
+    <author><name>Priya Raman</name></author>
+    <summary type="html">&lt;p&gt;by Fatima Al-Sayed, Tomás Ó Briain&lt;/p&gt; Sleep changed when microbes changed.</summary>
+  </entry>
+  <entry>
+    <title>An entry with only an updated date</title>
+    <link href="https://journals.example.net/sampleone/article?id=10.1371/journal.sone.0300002"/>
+    <id>info:doi/10.1371/journal.sone.0300002</id>
+    <updated>2024-03-06T10:00:00-08:00</updated>
+    <author><name>Solo Author</name><uri>https://orcid.org/0000-0000-0000-0000</uri></author>
+    <content type="html">&lt;p&gt;Body text in content.&lt;/p&gt;</content>
+  </entry>
+  <entry>
+    <title>No authors and no DOI anywhere</title>
+    <link href="https://journals.example.net/sampleone/news/editors-note"/>
+    <id>tag:journals.example.net,2024:note-1</id>
+    <updated>2024-03-01T00:00:00Z</updated>
+  </entry>
+</feed>

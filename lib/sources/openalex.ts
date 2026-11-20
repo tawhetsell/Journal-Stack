@@ -5,7 +5,7 @@ import {
   stripHtml,
 } from "@/lib/utils";
 
-type OpenAlexWork = {
+export type OpenAlexWork = {
   ids?: {
     doi?: string;
   };
@@ -18,6 +18,15 @@ type OpenAlexWork = {
     pdf_url?: string | null;
   } | null;
   abstract_inverted_index?: Record<string, number[]> | null;
+};
+
+// What a lookup contributes to an article.
+export type OpenAlexEnrichment = {
+  doi: string | null;
+  abstract: string | null;
+  openAccessUrl: string | null;
+  publisherLandingUrl: string | null;
+  directPdfUrl: string | null;
 };
 
 // OpenAlex publishes abstracts as a word -> positions index rather than text.
@@ -119,7 +128,31 @@ async function fetchPaced(url: string) {
   return null;
 }
 
-export async function enrichWithOpenAlex(doi: string | null) {
+// The part of a lookup that needs no network: what is taken from one record.
+// Kept apart from the request so it can be run over saved records
+// (scripts/export-fixtures.ts).
+export function enrichmentFromOpenAlexWork(
+  work: OpenAlexWork,
+  normalizedDoi: string,
+): OpenAlexEnrichment {
+  return {
+    doi: normalizeDoi(work.ids?.doi ?? normalizedDoi),
+    abstract: abstractFromInvertedIndex(work.abstract_inverted_index),
+    openAccessUrl:
+      safeHttpUrl(work.best_oa_location?.pdf_url) ??
+      safeHttpUrl(work.best_oa_location?.landing_page_url),
+    publisherLandingUrl:
+      safeHttpUrl(work.primary_location?.landing_page_url) ??
+      safeHttpUrl(work.best_oa_location?.landing_page_url),
+    directPdfUrl:
+      safeHttpUrl(work.primary_location?.pdf_url) ??
+      safeHttpUrl(work.best_oa_location?.pdf_url),
+  };
+}
+
+export async function enrichWithOpenAlex(
+  doi: string | null,
+): Promise<OpenAlexEnrichment | null> {
   const normalizedDoi = normalizeDoi(doi);
 
   if (!normalizedDoi) {
@@ -151,17 +184,5 @@ export async function enrichWithOpenAlex(doi: string | null) {
     return null;
   }
 
-  return {
-    doi: normalizeDoi(work.ids?.doi ?? normalizedDoi),
-    abstract: abstractFromInvertedIndex(work.abstract_inverted_index),
-    openAccessUrl:
-      safeHttpUrl(work.best_oa_location?.pdf_url) ??
-      safeHttpUrl(work.best_oa_location?.landing_page_url),
-    publisherLandingUrl:
-      safeHttpUrl(work.primary_location?.landing_page_url) ??
-      safeHttpUrl(work.best_oa_location?.landing_page_url),
-    directPdfUrl:
-      safeHttpUrl(work.primary_location?.pdf_url) ??
-      safeHttpUrl(work.best_oa_location?.pdf_url),
-  };
+  return enrichmentFromOpenAlexWork(work, normalizedDoi);
 }

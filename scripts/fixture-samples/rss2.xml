@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- RSS 2.0 in the style of a publisher's "most recent" feed. Made up for the fixtures. -->
+<rss version="2.0" xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:content="http://purl.org/rss/1.0/modules/content/" xmlns:prism="http://prismstandard.org/namespaces/basic/2.0/">
+  <channel>
+    <title>Journal of Sample Studies: Table of Contents</title>
+    <link>https://journals.example.org/toc/jss/current</link>
+    <description>Latest articles</description>
+    <item>
+      <title>Street-level discretion &amp; the &lt;i&gt;new&lt;/i&gt; public service</title>
+      <link>https://journals.example.org/doi/abs/10.1177/00000000241234567?af=R</link>
+      <guid isPermaLink="false">https://journals.example.org/doi/abs/10.1177/00000000241234567?af=R</guid>
+      <pubDate>Tue, 05 Mar 2024 08:00:00 GMT</pubDate>
+      <dc:creator>Ada Okafor</dc:creator>
+      <dc:creator>Liu Wei</dc:creator>
+      <dc:creator>María José Pérez</dc:creator>
+      <dc:creator>Ada Okafor</dc:creator>
+      <description><![CDATA[<p>Journal of Sample Studies, Ahead of Print. <br/>Frontline workers use H<sub>2</sub>O metaphors&nbsp;&mdash; and more.</p>]]></description>
+    </item>
+    <item>
+      <title>A single byline with several names</title>
+      <link>https://journals.example.org/articles/10.3389/fsamp.2024.1234567/full</link>
+      <guid>https://journals.example.org/articles/10.3389/fsamp.2024.1234567/full</guid>
+      <pubDate>Mon, 4 Mar 2024 23:30:00 -0500</pubDate>
+      <dc:creator>Jane Smith, Omar Haddad and Chen Li</dc:creator>
+      <description>Plain text summary with an ampersand &amp; a "quote".</description>
+    </item>
+    <item>
+      <title>Surname-first author</title>
+      <link>https://journals.example.org/article/view/42</link>
+      <guid isPermaLink="false">jss-42</guid>
+      <pubDate>2024-02-29</pubDate>
+      <author>Smith, Jane</author>
+      <dc:identifier>doi:10.5555/JSS.2024.42</dc:identifier>
+      <content:encoded><![CDATA[<div><h2>Abstract</h2><p>Full text body &amp; more, in <em>content:encoded</em>.</p></div>]]></content:encoded>
+    </item>
+    <item>
+      <title>Semicolon-separated authors</title>
+      <link>https://journals.example.org/article/view/43</link>
+      <guid isPermaLink="false">jss-43</guid>
+      <pubDate>not a date</pubDate>
+      <dc:creator>Okafor, Ada; Wei, Liu; Pérez, María José</dc:creator>
+      <prism:doi>10.5555/jss.2024.43</prism:doi>
+      <dc:identifier>10.9999/should-not-be-used</dc:identifier>
+    </item>
+    <item>
+      <title>   </title>
+      <link>ftp://journals.example.org/not-a-web-link</link>
+      <guid isPermaLink="false">jss-44</guid>
+    </item>
+    <item>
+      <title>Two authors joined by an ampersand</title>
+      <link>https://doi.org/10.1016/j.sample.2024.01.005.</link>
+      <dc:creator>Ada Okafor &amp; Liu Wei</dc:creator>
+      <description></description>
+    </item>
+  </channel>
+</rss>
