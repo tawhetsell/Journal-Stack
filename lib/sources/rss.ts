@@ -192,7 +192,9 @@ export async function fetchArticlesFromRss(
         abstract:
           stripHtml(getFirstString(typedItem.contentSnippet)) ??
           stripHtml(getFirstString(typedItem.content)) ??
-          stripHtml(getFirstString(typedItem.summary)),
+          stripHtml(getFirstString(typedItem.summary)) ??
+          enrichment?.abstract ??
+          null,
         publicationDate:
           parseDate(getFirstString(typedItem.isoDate)) ??
           parseDate(getFirstString(typedItem.pubDate)),

@@ -122,7 +122,12 @@ export async function fetchArticlesFromCrossref(
         doi: enrichment?.doi ?? doi,
         // sourceId above keeps the raw title so existing rows still match.
         title: stripHtml(work.title?.[0]) ?? "Untitled article",
-        abstract: stripHtml(work.abstract?.replace(ABSTRACT_HEADING, "")),
+        // Several publishers (Elsevier among them) deposit no abstract with
+        // Crossref, so OpenAlex fills the gap when it has one.
+        abstract:
+          stripHtml(work.abstract?.replace(ABSTRACT_HEADING, "")) ??
+          enrichment?.abstract ??
+          null,
         publicationDate: buildDate(work),
         authors:
           work.author?.map((author) => {
